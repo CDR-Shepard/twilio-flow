@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { supabaseAdmin } from "../../../../lib/supabase/admin";
+import { getSupabaseAdmin } from "../../../../lib/supabase/admin";
 
 export async function updateCallFlow(trackedNumberId: string, agentIds: string[]) {
+  const supabaseAdmin = getSupabaseAdmin();
   await supabaseAdmin.from("tracked_number_routes").delete().eq("tracked_number_id", trackedNumberId);
 
   if (agentIds.length > 0) {

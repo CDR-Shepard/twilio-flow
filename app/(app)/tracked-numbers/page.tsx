@@ -7,10 +7,12 @@ import { createTrackedNumber, deleteTrackedNumber, toggleTrackedNumber } from ".
 
 export default async function TrackedNumbersPage() {
   const { supabase } = await requireAdminSession();
-  const { data: numbers } = await supabase
+  const { data: numbersData } = await supabase
     .from("tracked_numbers")
     .select("*")
     .order("created_at", { ascending: false });
+  type TrackedNumberRow = import("../../../lib/types/supabase").Database["public"]["Tables"]["tracked_numbers"]["Row"];
+  const numbers: TrackedNumberRow[] = numbersData ?? [];
 
   return (
     <div className="space-y-6">

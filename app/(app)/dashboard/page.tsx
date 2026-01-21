@@ -25,7 +25,7 @@ export default async function DashboardPage() {
         .limit(10)
     ]);
 
-  const recentCalls = recentCallsResponse.data ?? [];
+  const recentCalls = (recentCallsResponse.data ?? []) as any[];
 
   return (
     <div className="space-y-6">

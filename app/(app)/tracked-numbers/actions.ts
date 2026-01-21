@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { supabaseAdmin } from "../../../lib/supabase/admin";
+import { getSupabaseAdmin } from "../../../lib/supabase/admin";
 import { normalizeE164 } from "../../../lib/phone";
 
 export async function createTrackedNumber(formData: FormData) {
@@ -10,6 +10,7 @@ export async function createTrackedNumber(formData: FormData) {
   const normalized = normalizeE164(phone);
   if (!normalized) throw new Error("Invalid phone number");
 
+  const supabaseAdmin = getSupabaseAdmin();
   await supabaseAdmin.from("tracked_numbers").insert({
     friendly_name,
     twilio_phone_number: normalized
@@ -18,11 +19,13 @@ export async function createTrackedNumber(formData: FormData) {
 }
 
 export async function toggleTrackedNumber(id: string, active: boolean) {
+  const supabaseAdmin = getSupabaseAdmin();
   await supabaseAdmin.from("tracked_numbers").update({ active }).eq("id", id);
   revalidatePath("/tracked-numbers");
 }
 
 export async function deleteTrackedNumber(id: string) {
+  const supabaseAdmin = getSupabaseAdmin();
   await supabaseAdmin.from("tracked_numbers").delete().eq("id", id);
   revalidatePath("/tracked-numbers");
 }

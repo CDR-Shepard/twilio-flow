@@ -6,7 +6,9 @@ import { createAgent, toggleAgent, deleteAgent } from "./actions";
 
 export default async function AgentsPage() {
   const { supabase } = await requireAdminSession();
-  const { data: agents } = await supabase.from("agents").select("*").order("created_at", { ascending: false });
+  const { data } = await supabase.from("agents").select("*").order("created_at", { ascending: false });
+  type Agent = import("../../../lib/types/supabase").Database["public"]["Tables"]["agents"]["Row"];
+  const agents: Agent[] = data ?? [];
 
   return (
     <div className="space-y-6">
@@ -42,7 +44,7 @@ export default async function AgentsPage() {
               </tr>
             </thead>
             <tbody>
-              {agents?.map((agent) => (
+              {agents.map((agent) => (
                 <tr key={agent.id} className="border-t border-slate-100">
                   <td className="px-2 py-2">{agent.full_name}</td>
                   <td className="px-2 py-2">{agent.phone_number}</td>

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "../../../../../lib/supabase/admin";
+import { getSupabaseAdmin } from "../../../../../lib/supabase/admin";
 import { VoiceResponse, validateTwilioRequest } from "../../../../../lib/twilio";
 
 export async function POST(request: Request) {
@@ -18,6 +18,7 @@ export async function POST(request: Request) {
 
   const twiml = new VoiceResponse();
 
+  const supabaseAdmin = getSupabaseAdmin();
   const { data: trackedNumber } = await supabaseAdmin
     .from("tracked_numbers")
     .select("*")
@@ -55,12 +56,13 @@ export async function POST(request: Request) {
     await supabaseAdmin.from("calls").update({ status: "ringing" }).eq("id", callId);
   }
 
-  const { data: routes } = await supabaseAdmin
+  const { data: routesData } = await supabaseAdmin
     .from("tracked_number_routes")
     .select("agent_id, agents(full_name, phone_number, active)")
     .eq("tracked_number_id", trackedNumber.id)
     .eq("active", true)
     .order("sort_order", { ascending: true });
+  const routes = (routesData ?? []) as any[];
 
   const activeAgents =
     routes?.filter((r) => r.agents?.active).map((r) => r.agents!).filter(Boolean) ?? [];
@@ -82,7 +84,7 @@ export async function POST(request: Request) {
     dial.number(
       {
         statusCallback: `${baseUrl}/api/twilio/voice/status?call_id=${callId}&agent_id=${agent.id}`,
-        statusCallbackEvent: "initiated ringing answered completed",
+        statusCallbackEvent: ["initiated", "ringing", "answered", "completed"],
         statusCallbackMethod: "POST"
       },
       agent.phone_number

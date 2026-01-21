@@ -6,21 +6,29 @@ import { updateCallFlow } from "./actions";
 export default async function TrackedNumberDetailPage({ params }: { params: { id: string } }) {
   const { supabase } = await requireAdminSession();
 
-  const { data: trackedNumber } = await supabase.from("tracked_numbers").select("*").eq("id", params.id).single();
+  type TrackedNumberRow = import("../../../../lib/types/supabase").Database["public"]["Tables"]["tracked_numbers"]["Row"];
+  const { data: trackedNumberData } = await supabase
+    .from("tracked_numbers")
+    .select("*")
+    .eq("id", params.id)
+    .single();
+  const trackedNumber = trackedNumberData as TrackedNumberRow | null;
   if (!trackedNumber) return notFound();
 
-  const { data: routes } = await supabase
+  const { data: routesData } = await supabase
     .from("tracked_number_routes")
     .select("agent_id, sort_order, agents(*)")
     .eq("tracked_number_id", params.id)
     .eq("active", true)
     .order("sort_order", { ascending: true });
+  const routes = (routesData ?? []) as any[];
 
-  const { data: activeAgents } = await supabase
+  const { data: activeAgentsData } = await supabase
     .from("agents")
     .select("*")
     .eq("active", true)
     .order("full_name");
+  const activeAgents = (activeAgentsData ?? []) as any[];
 
   const selected = (routes ?? [])
     .map((r) => ({

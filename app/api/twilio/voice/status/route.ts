@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "../../../../../lib/supabase/admin";
+import { getSupabaseAdmin } from "../../../../../lib/supabase/admin";
 import { VoiceResponse, validateTwilioRequest } from "../../../../../lib/twilio";
 
 function mapAttemptStatus(status: string) {
@@ -61,6 +61,7 @@ export async function POST(request: Request) {
   const callId = url.searchParams.get("call_id") || undefined;
   const agentId = url.searchParams.get("agent_id") || undefined;
   const scope = url.searchParams.get("scope") || "leg";
+  const supabaseAdmin = getSupabaseAdmin();
 
   if (scope === "parent" && callId) {
     const status = mapCallStatus(callStatus);

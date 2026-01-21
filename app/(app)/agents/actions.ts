@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { supabaseAdmin } from "../../../lib/supabase/admin";
+import { getSupabaseAdmin } from "../../../lib/supabase/admin";
 import { normalizeE164 } from "../../../lib/phone";
 
 export async function createAgent(formData: FormData) {
@@ -10,16 +10,19 @@ export async function createAgent(formData: FormData) {
   const normalized = normalizeE164(phone);
   if (!normalized) throw new Error("Invalid phone number");
 
+  const supabaseAdmin = getSupabaseAdmin();
   await supabaseAdmin.from("agents").insert({ full_name: name, phone_number: normalized });
   revalidatePath("/agents");
 }
 
 export async function toggleAgent(id: string, active: boolean) {
+  const supabaseAdmin = getSupabaseAdmin();
   await supabaseAdmin.from("agents").update({ active }).eq("id", id);
   revalidatePath("/agents");
 }
 
 export async function deleteAgent(id: string) {
+  const supabaseAdmin = getSupabaseAdmin();
   await supabaseAdmin.from("agents").delete().eq("id", id);
   revalidatePath("/agents");
 }

@@ -10,7 +10,9 @@ export default async function CallLogsPage({
 }) {
   const { supabase } = await requireAdminSession();
 
-  const { data: numbers } = await supabase.from("tracked_numbers").select("id, friendly_name");
+  type TrackedNumber = import("../../../lib/types/supabase").Database["public"]["Tables"]["tracked_numbers"]["Row"];
+  const { data: numbersData } = await supabase.from("tracked_numbers").select("id, friendly_name");
+  const numbers: Pick<TrackedNumber, "id" | "friendly_name">[] = numbersData ?? [];
 
   let query = supabase
     .from("calls")
@@ -27,7 +29,9 @@ export default async function CallLogsPage({
     query = query.eq("status", searchParams.status);
   }
 
-  const { data: calls } = await query;
+  type Call = import("../../../lib/types/supabase").Database["public"]["Tables"]["calls"]["Row"];
+  const { data: callsData } = await query;
+  const calls: any[] = callsData ?? [];
 
   return (
     <div className="space-y-6">
