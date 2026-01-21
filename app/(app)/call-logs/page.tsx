@@ -1,0 +1,110 @@
+import { format } from "date-fns";
+import Link from "next/link";
+import { requireAdminSession } from "../../../lib/auth";
+import { Card } from "../../../components/ui/card";
+
+export default async function CallLogsPage({
+  searchParams
+}: {
+  searchParams: { tracked_number_id?: string; status?: string };
+}) {
+  const { supabase } = await requireAdminSession();
+
+  const { data: numbers } = await supabase.from("tracked_numbers").select("id, friendly_name");
+
+  let query = supabase
+    .from("calls")
+    .select(
+      "id, from_number, to_number, status, started_at, ended_at, connected_agent_id, agents:connected_agent_id(full_name), tracked_numbers:tracked_number_id(friendly_name)"
+    )
+    .order("started_at", { ascending: false })
+    .limit(50);
+
+  if (searchParams.tracked_number_id) {
+    query = query.eq("tracked_number_id", searchParams.tracked_number_id);
+  }
+  if (searchParams.status) {
+    query = query.eq("status", searchParams.status);
+  }
+
+  const { data: calls } = await query;
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-semibold text-slate-900">Call logs</h1>
+
+      <Card>
+        <div className="flex flex-wrap gap-3">
+          <form className="flex gap-2">
+            <select name="tracked_number_id" defaultValue={searchParams.tracked_number_id ?? ""} className="rounded-md border border-slate-200 px-3 py-2 text-sm">
+              <option value="">All numbers</option>
+              {numbers?.map((n) => (
+                <option key={n.id} value={n.id}>
+                  {n.friendly_name}
+                </option>
+              ))}
+            </select>
+            <select name="status" defaultValue={searchParams.status ?? ""} className="rounded-md border border-slate-200 px-3 py-2 text-sm">
+              <option value="">Any status</option>
+              <option value="initiated">Initiated</option>
+              <option value="ringing">Ringing</option>
+              <option value="connected">Connected</option>
+              <option value="completed">Completed</option>
+              <option value="failed">Failed</option>
+            </select>
+            <button
+              type="submit"
+              className="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+            >
+              Filter
+            </button>
+          </form>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead className="text-left text-xs uppercase text-slate-500">
+              <tr>
+                <th className="px-2 py-1">Started</th>
+                <th className="px-2 py-1">Caller</th>
+                <th className="px-2 py-1">Tracked number</th>
+                <th className="px-2 py-1">Status</th>
+                <th className="px-2 py-1">Answered by</th>
+                <th className="px-2 py-1">Duration</th>
+              </tr>
+            </thead>
+            <tbody>
+              {calls?.map((call) => (
+                <tr key={call.id} className="border-t border-slate-100">
+                  <td className="px-2 py-2">{format(new Date(call.started_at), "PP p")}</td>
+                  <td className="px-2 py-2">{call.from_number ?? "Unknown"}</td>
+                  <td className="px-2 py-2">
+                    {call.tracked_numbers?.friendly_name ?? call.to_number ?? "—"}
+                  </td>
+                  <td className="px-2 py-2 capitalize">{call.status}</td>
+                  <td className="px-2 py-2">{call.agents?.full_name ?? "—"}</td>
+                  <td className="px-2 py-2">
+                    {call.ended_at
+                      ? Math.round(
+                          (new Date(call.ended_at).getTime() - new Date(call.started_at).getTime()) / 1000
+                        ) + "s"
+                      : "—"}
+                  </td>
+                </tr>
+              ))}
+              {(!calls || calls.length === 0) && (
+                <tr>
+                  <td colSpan={6} className="px-2 py-4 text-center text-slate-500">
+                    No calls yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+}
