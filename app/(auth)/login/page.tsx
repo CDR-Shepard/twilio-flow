@@ -2,10 +2,15 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import type { Database } from "../../../lib/types/supabase";
+import { getSupabaseEnv } from "../../../lib/env";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage({ searchParams }: { searchParams: { error?: string } }) {
-  const supabase = createServerComponentClient<Database>({ cookies });
+  const { supabaseUrl, supabaseAnonKey } = getSupabaseEnv();
+  const supabase = createServerComponentClient<Database>(
+    { cookies },
+    { supabaseUrl, supabaseKey: supabaseAnonKey }
+  );
   const {
     data: { session }
   } = await supabase.auth.getSession();

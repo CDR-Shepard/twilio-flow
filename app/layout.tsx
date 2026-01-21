@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { SupabaseProvider } from "../components/supabase-provider";
+import { getSupabaseEnv } from "../lib/env";
 import type { Metadata } from "next";
 import type { Database } from "../lib/types/supabase";
 
@@ -14,7 +15,11 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createServerComponentClient<Database>({ cookies });
+  const { supabaseUrl, supabaseAnonKey } = getSupabaseEnv();
+  const supabase = createServerComponentClient<Database>(
+    { cookies },
+    { supabaseUrl, supabaseKey: supabaseAnonKey }
+  );
   const {
     data: { session }
   } = await supabase.auth.getSession();
