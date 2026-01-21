@@ -89,3 +89,4 @@ export default async function TrackedNumbersPage() {
     </div>
   );
 }
+export const dynamic = "force-dynamic";

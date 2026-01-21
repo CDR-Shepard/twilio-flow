@@ -62,3 +62,4 @@ export default async function TrackedNumberDetailPage({ params }: { params: { id
     </div>
   );
 }
+export const dynamic = "force-dynamic";

@@ -38,3 +38,4 @@ export default async function LoginPage({ searchParams }: { searchParams: { erro
     </div>
   );
 }
+export const dynamic = "force-dynamic";

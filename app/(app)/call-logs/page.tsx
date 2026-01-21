@@ -112,3 +112,4 @@ export default async function CallLogsPage({
     </div>
   );
 }
+export const dynamic = "force-dynamic";
