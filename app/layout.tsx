@@ -1,5 +1,4 @@
 import "./globals.css";
-import { Space_Grotesk } from "next/font/google";
 import { cookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { SupabaseProvider } from "../components/supabase-provider";
@@ -7,8 +6,6 @@ import { getSupabaseEnv } from "../lib/env";
 import type { Metadata } from "next";
 import type { Database } from "../lib/types/supabase";
 import { TopLoader } from "../components/top-loader";
-
-const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-grotesk" });
 
 export const metadata: Metadata = {
   title: "Call Routing Admin",
@@ -27,7 +24,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en">
-      <body className={grotesk.className}>
+      <body>
         <TopLoader />
         <SupabaseProvider session={session}>{children}</SupabaseProvider>
       </body>
