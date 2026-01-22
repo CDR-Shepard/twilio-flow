@@ -29,17 +29,17 @@ export default async function CallLogsPage({
   }
 
   const { data: callsData } = await query;
-  const calls =
-    callsData?.map((c) => ({
-      id: c.id as string,
-      from_number: c.from_number,
-      to_number: c.to_number,
-      status: c.status,
-      started_at: c.started_at,
-      ended_at: c.ended_at,
-      agents: c.agents,
-      tracked_numbers: c.tracked_numbers
-    })) ?? [];
+  type CallRow = {
+    id: string;
+    from_number: string | null;
+    to_number: string | null;
+    status: string;
+    started_at: string;
+    ended_at: string | null;
+    agents?: { full_name?: string | null } | null;
+    tracked_numbers?: { friendly_name?: string | null } | null;
+  };
+  const calls: CallRow[] = (callsData as CallRow[] | null) ?? [];
 
   return (
     <div className="space-y-6">
