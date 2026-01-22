@@ -28,7 +28,7 @@ export function Nav() {
       <div className="container-wide flex items-center justify-between py-3">
         <div className="flex items-center gap-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 text-sm font-bold text-white shadow-md shadow-brand-500/20">
-            CR
+            GG
           </div>
           <nav className="flex items-center gap-2">
             {links.map((link) => {
