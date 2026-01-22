@@ -62,18 +62,20 @@ export async function POST(request: Request) {
     .eq("tracked_number_id", trackedNumber.id)
     .eq("active", true)
     .order("sort_order", { ascending: true });
-  const routes =
-    routesData?.map((r) => ({
-      agent_id: r.agent_id,
-      agent: {
-        full_name: r.agents?.full_name,
-        phone_number: r.agents?.phone_number,
-        active: r.agents?.active,
-        id: r.agent_id
-      }
-    })) ?? [];
-
-  const activeAgents = routes.filter((r) => r.agent.active).map((r) => r.agent);
+  type AgentEntry = { full_name?: string | null; phone_number?: string | null; active?: boolean | null };
+  type RouteRow = { agent_id: string; agents?: AgentEntry | AgentEntry[] | null };
+  const routesRaw: RouteRow[] = (routesData as RouteRow[] | null) ?? [];
+  const activeAgents = routesRaw
+    .map((r) => {
+      const agentEntry = Array.isArray(r.agents) ? r.agents[0] : r.agents;
+      return {
+        id: r.agent_id as string,
+        full_name: agentEntry?.full_name ?? "",
+        phone_number: agentEntry?.phone_number ?? "",
+        active: agentEntry?.active ?? false
+      };
+    })
+    .filter((a) => a.active);
 
   if (activeAgents.length === 0) {
     twiml.say("No agents are assigned to this number.");
