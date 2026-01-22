@@ -1,5 +1,4 @@
 import { format } from "date-fns";
-import Link from "next/link";
 import { requireAdminSession } from "../../../lib/auth";
 import { Card } from "../../../components/ui/card";
 
@@ -29,9 +28,8 @@ export default async function CallLogsPage({
     query = query.eq("status", searchParams.status);
   }
 
-  type Call = import("../../../lib/types/supabase").Database["public"]["Tables"]["calls"]["Row"];
   const { data: callsData } = await query;
-  const calls: any[] = callsData ?? [];
+  const calls = callsData ?? [];
 
   return (
     <div className="space-y-6">

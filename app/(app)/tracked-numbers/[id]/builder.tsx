@@ -27,12 +27,10 @@ export type Agent = {
 };
 
 export function CallFlowBuilder({
-  trackedNumberId,
   initialAvailable,
   initialSelected,
   onSave
 }: {
-  trackedNumberId: string;
   initialAvailable: Agent[];
   initialSelected: Agent[];
   onSave: (agentIds: string[]) => Promise<void>;
@@ -62,13 +60,6 @@ export function CallFlowBuilder({
     setSelected([]);
   };
 
-  function moveToSelected(id: string) {
-    const agent = available.find((a) => a.id === id);
-    if (!agent) return;
-    setAvailable((prev) => prev.filter((a) => a.id !== id));
-    setSelected((prev) => [...prev, agent]);
-  }
-
   function moveToAvailable(id: string) {
     const agent = selected.find((a) => a.id === id);
     if (!agent) return;
@@ -76,11 +67,11 @@ export function CallFlowBuilder({
     setAvailable((prev) => [...prev, agent]);
   }
 
-  function handleDragStart(event: any) {
+  function handleDragStart(event: { active: { id?: string } }) {
     setActiveId(event.active?.id ?? null);
   }
 
-  function handleDragEnd(event: any) {
+  function handleDragEnd(event: { active: { id?: string }; over?: { id?: string } }) {
     setActiveId(null);
     const { active, over } = event;
     if (!over) return;

@@ -62,10 +62,18 @@ export async function POST(request: Request) {
     .eq("tracked_number_id", trackedNumber.id)
     .eq("active", true)
     .order("sort_order", { ascending: true });
-  const routes = (routesData ?? []) as any[];
+  const routes =
+    routesData?.map((r) => ({
+      agent_id: r.agent_id,
+      agent: {
+        full_name: r.agents?.full_name,
+        phone_number: r.agents?.phone_number,
+        active: r.agents?.active,
+        id: r.agent_id
+      }
+    })) ?? [];
 
-  const activeAgents =
-    routes?.filter((r) => r.agents?.active).map((r) => r.agents!).filter(Boolean) ?? [];
+  const activeAgents = routes.filter((r) => r.agent.active).map((r) => r.agent);
 
   if (activeAgents.length === 0) {
     twiml.say("No agents are assigned to this number.");

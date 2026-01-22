@@ -21,14 +21,20 @@ export default async function TrackedNumberDetailPage({ params }: { params: { id
     .eq("tracked_number_id", params.id)
     .eq("active", true)
     .order("sort_order", { ascending: true });
-  const routes = (routesData ?? []) as any[];
+  type RouteRow = {
+    agent_id: string;
+    sort_order: number;
+    agents?: { full_name: string; phone_number: string };
+  };
+  const routes: RouteRow[] = routesData ?? [];
 
   const { data: activeAgentsData } = await supabase
     .from("agents")
     .select("*")
     .eq("active", true)
     .order("full_name");
-  const activeAgents = (activeAgentsData ?? []) as any[];
+  type AgentRow = import("../../../../lib/types/supabase").Database["public"]["Tables"]["agents"]["Row"];
+  const activeAgents: AgentRow[] = activeAgentsData ?? [];
 
   const selected = (routes ?? [])
     .map((r) => ({
@@ -53,12 +59,7 @@ export default async function TrackedNumberDetailPage({ params }: { params: { id
         </h1>
       </div>
 
-      <CallFlowBuilder
-        trackedNumberId={params.id}
-        initialAvailable={available}
-        initialSelected={selected}
-        onSave={updateCallFlow.bind(null, params.id)}
-      />
+      <CallFlowBuilder initialAvailable={available} initialSelected={selected} onSave={updateCallFlow.bind(null, params.id)} />
     </div>
   );
 }

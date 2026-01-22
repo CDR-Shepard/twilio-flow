@@ -25,7 +25,8 @@ export default async function DashboardPage() {
         .limit(10)
     ]);
 
-  const recentCalls = (recentCallsResponse.data ?? []) as any[];
+  type RecentCall = NonNullable<typeof recentCallsResponse.data>[number];
+  const recentCalls: RecentCall[] = recentCallsResponse.data ?? [];
 
   return (
     <div className="space-y-7">

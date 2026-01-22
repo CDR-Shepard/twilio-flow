@@ -55,7 +55,7 @@ export async function POST(request: Request) {
 
   const params = new URLSearchParams(rawBody);
   const callSid = params.get("CallSid") || "";
-  const parentCallSid = params.get("ParentCallSid") || "";
+  // ParentCallSid not currently used but kept for future branching
   const callStatusRaw = params.get("CallStatus") || params.get("DialCallStatus") || "";
   const callStatus = callStatusRaw.toLowerCase();
   const callId = url.searchParams.get("call_id") || undefined;
