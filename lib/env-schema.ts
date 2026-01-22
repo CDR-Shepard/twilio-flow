@@ -14,18 +14,18 @@ export type AppEnv = z.infer<typeof envSchema>;
 export function loadEnv() {
   const parsed = envSchema.safeParse(process.env);
   if (!parsed.success) {
-    if (process.env.NODE_ENV === "development") {
-      // Provide soft fallback in dev to avoid build crashes
-      return {
-        NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://placeholder.supabase.co",
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "placeholder",
-        SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "placeholder",
-        TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
-        TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
-        TWILIO_APP_BASE_URL: process.env.TWILIO_APP_BASE_URL
-      } satisfies AppEnv;
+    if (process.env.REQUIRE_ENV === "true") {
+      throw new Error(`Environment validation failed: ${parsed.error.message}`);
     }
-    throw new Error(`Environment validation failed: ${parsed.error.message}`);
+    // Provide soft fallback to allow builds without env during local/testing
+    return {
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://placeholder.supabase.co",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "placeholder",
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "placeholder",
+      TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
+      TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
+      TWILIO_APP_BASE_URL: process.env.TWILIO_APP_BASE_URL
+    } satisfies AppEnv;
   }
   return parsed.data;
 }
