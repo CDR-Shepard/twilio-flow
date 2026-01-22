@@ -5,6 +5,8 @@ import {
   DragOverlay,
   KeyboardSensor,
   PointerSensor,
+  type DragStartEvent,
+  type DragEndEvent,
   useDroppable,
   useSensor,
   useSensors
@@ -67,17 +69,17 @@ export function CallFlowBuilder({
     setAvailable((prev) => [...prev, agent]);
   }
 
-  function handleDragStart(event: { active: { id?: string } }) {
-    setActiveId(event.active?.id ?? null);
+  function handleDragStart(event: DragStartEvent) {
+    setActiveId(event.active.id ? String(event.active.id) : null);
   }
 
-  function handleDragEnd(event: { active: { id?: string }; over?: { id?: string } }) {
+  function handleDragEnd(event: DragEndEvent) {
     setActiveId(null);
     const { active, over } = event;
     if (!over) return;
 
-    const activeId = active.id as string;
-    const overId = over.id as string;
+    const activeId = String(active.id);
+    const overId = String(over.id);
 
     if (selectedIds.includes(activeId) && selectedIds.includes(overId)) {
       const oldIndex = selectedIds.indexOf(activeId);
