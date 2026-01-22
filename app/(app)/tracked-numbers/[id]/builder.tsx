@@ -2,6 +2,7 @@
 
 import {
   DndContext,
+  DragOverlay,
   KeyboardSensor,
   PointerSensor,
   useDroppable,
@@ -38,6 +39,7 @@ export function CallFlowBuilder({
 }) {
   const [available, setAvailable] = useState<Agent[]>(initialAvailable);
   const [selected, setSelected] = useState<Agent[]>(initialSelected);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [saving, startTransition] = useTransition();
 
   const sensors = useSensors(
@@ -74,7 +76,12 @@ export function CallFlowBuilder({
     setAvailable((prev) => [...prev, agent]);
   }
 
+  function handleDragStart(event: any) {
+    setActiveId(event.active?.id ?? null);
+  }
+
   function handleDragEnd(event: any) {
+    setActiveId(null);
     const { active, over } = event;
     if (!over) return;
 
@@ -112,7 +119,7 @@ export function CallFlowBuilder({
     });
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="grid gap-6 md:grid-cols-2">
         <Column title="Available agents" hint="Drag into the ringing group">
           <Droppable id="available">
@@ -153,6 +160,12 @@ export function CallFlowBuilder({
           </Droppable>
         </Column>
       </div>
+
+      <DragOverlay>
+        {activeId ? (
+          <DragCard agent={[...available, ...selected].find((a) => a.id === activeId) || null} />
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 }
@@ -231,6 +244,16 @@ function SortableItem({ id, item }: { id: string; item: Agent }) {
         <div className="text-xs text-slate-500">{item.phone_number}</div>
       </div>
       <span className="text-xs text-slate-400">⇅</span>
+    </div>
+  );
+}
+
+function DragCard({ agent }: { agent: Agent | null }) {
+  if (!agent) return null;
+  return (
+    <div className="rounded-md bg-white px-3 py-3 shadow-xl ring-1 ring-slate-200">
+      <div className="text-sm font-semibold text-slate-900">{agent.full_name}</div>
+      <div className="text-xs text-slate-500">{agent.phone_number}</div>
     </div>
   );
 }
