@@ -25,8 +25,24 @@ export default async function DashboardPage() {
         .limit(10)
     ]);
 
-  type RecentCall = NonNullable<typeof recentCallsResponse.data>[number];
-  const recentCalls: RecentCall[] = recentCallsResponse.data ?? [];
+  const recentCalls: {
+    id: string;
+    from_number: string | null;
+    to_number: string | null;
+    status: string;
+    started_at: string;
+    agents?: { full_name?: string | null } | null;
+    tracked_numbers?: { friendly_name?: string | null } | null;
+  }[] =
+    recentCallsResponse.data?.map((c) => ({
+      id: c.id as string,
+      from_number: c.from_number,
+      to_number: c.to_number,
+      status: c.status,
+      started_at: c.started_at,
+      agents: c.agents,
+      tracked_numbers: c.tracked_numbers
+    })) ?? [];
 
   return (
     <div className="space-y-7">
