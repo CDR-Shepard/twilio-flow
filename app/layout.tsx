@@ -6,6 +6,7 @@ import { SupabaseProvider } from "../components/supabase-provider";
 import { getSupabaseEnv } from "../lib/env";
 import type { Metadata } from "next";
 import type { Database } from "../lib/types/supabase";
+import { TopLoader } from "../components/top-loader";
 
 const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-grotesk" });
 
@@ -27,6 +28,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body className={grotesk.className}>
+        <TopLoader />
         <SupabaseProvider session={session}>{children}</SupabaseProvider>
       </body>
     </html>

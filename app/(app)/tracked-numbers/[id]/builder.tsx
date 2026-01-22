@@ -50,6 +50,16 @@ export function CallFlowBuilder({
   const availableIds = available.map((a) => a.id);
   const selectedIds = selected.map((a) => a.id);
 
+  const handleAddAll = () => {
+    setSelected(selected.concat(available));
+    setAvailable([]);
+  };
+
+  const handleClear = () => {
+    setAvailable(available.concat(selected));
+    setSelected([]);
+  };
+
   function moveToSelected(id: string) {
     const agent = available.find((a) => a.id === id);
     if (!agent) return;
@@ -116,13 +126,23 @@ export function CallFlowBuilder({
           title="Ringing group"
           hint="Top to bottom order; all ring simultaneously"
           footer={
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-slate-500">
-                {selected.length} agent{selected.length === 1 ? "" : "s"} in group
-              </p>
-              <Button onClick={handleSave} loading={saving} variant="accent">
-                Save order
-              </Button>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex gap-2">
+                <Button variant="secondary" size="sm" onClick={handleAddAll} disabled={available.length === 0}>
+                  Add all
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleClear} disabled={selected.length === 0}>
+                  Clear
+                </Button>
+              </div>
+              <div className="flex items-center gap-3">
+                <p className="text-xs text-slate-500">
+                  {selected.length} agent{selected.length === 1 ? "" : "s"} in group
+                </p>
+                <Button onClick={handleSave} loading={saving} variant="accent">
+                  Save order
+                </Button>
+              </div>
             </div>
           }
         >
