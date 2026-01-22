@@ -29,7 +29,8 @@ export default async function CallLogsPage({
   }
 
   const { data: callsData } = await query;
-  const calls = callsData ?? [];
+  type CallRow = NonNullable<typeof callsData>[number];
+  const calls: CallRow[] = callsData ?? [];
 
   return (
     <div className="space-y-6">

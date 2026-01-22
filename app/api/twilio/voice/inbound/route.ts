@@ -102,7 +102,7 @@ export async function POST(request: Request) {
   return twimlResponse(twiml);
 }
 
-function twimlResponse(response: any) {
+function twimlResponse(response: { toString(): string }) {
   return new NextResponse(response.toString(), {
     status: 200,
     headers: { "Content-Type": "text/xml" }

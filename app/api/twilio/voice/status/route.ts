@@ -65,7 +65,7 @@ export async function POST(request: Request) {
 
   if (scope === "parent" && callId) {
     const status = mapCallStatus(callStatus);
-    const update: any = { status };
+    const update: { status: ReturnType<typeof mapCallStatus>; ended_at?: string } = { status };
     if (status === "completed" || status === "failed") {
       update.ended_at = new Date().toISOString();
     }
