@@ -29,8 +29,17 @@ export default async function CallLogsPage({
   }
 
   const { data: callsData } = await query;
-  type CallRow = NonNullable<typeof callsData>[number];
-  const calls: CallRow[] = callsData ?? [];
+  const calls =
+    callsData?.map((c) => ({
+      id: c.id,
+      from_number: c.from_number,
+      to_number: c.to_number,
+      status: c.status,
+      started_at: c.started_at,
+      ended_at: c.ended_at,
+      agents: c.agents,
+      tracked_numbers: c.tracked_numbers
+    })) ?? [];
 
   return (
     <div className="space-y-6">
