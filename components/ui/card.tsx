@@ -5,14 +5,18 @@ type Props = {
   children: React.ReactNode;
   className?: string;
   actions?: React.ReactNode;
+  subtitle?: string;
 };
 
-export function Card({ title, children, className, actions }: Props) {
+export function Card({ title, children, className, actions, subtitle }: Props) {
   return (
-    <div className={clsx("rounded-lg border border-slate-200 bg-white shadow-sm", className)}>
+    <div className={clsx("glass rounded-xl", className)}>
       {(title || actions) && (
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-          <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+        <div className="flex items-start justify-between gap-3 border-b border-white/60 px-4 py-3">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+            {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
+          </div>
           {actions}
         </div>
       )}

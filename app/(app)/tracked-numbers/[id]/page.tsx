@@ -48,7 +48,7 @@ export default async function TrackedNumberDetailPage({ params }: { params: { id
     <div className="space-y-6">
       <div>
         <p className="text-sm text-slate-500">Tracked number</p>
-        <h1 className="text-2xl font-semibold text-slate-900">
+        <h1 className="text-3xl font-bold text-slate-900">
           {trackedNumber.friendly_name} ({trackedNumber.twilio_phone_number})
         </h1>
       </div>

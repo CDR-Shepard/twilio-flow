@@ -28,8 +28,8 @@ export default async function LoginPage({ searchParams }: { searchParams: { erro
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-lg">
-        <h1 className="mb-2 text-2xl font-semibold text-slate-900">Admin login</h1>
+      <div className="glass w-full max-w-md rounded-2xl p-8 shadow-xl shadow-brand-500/10">
+        <h1 className="mb-2 text-3xl font-bold text-slate-900">Admin login</h1>
         <p className="mb-6 text-sm text-slate-600">
           Use your Supabase account email/password. Only allowlisted admins can sign in.
         </p>

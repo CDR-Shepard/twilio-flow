@@ -5,9 +5,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   await requireAdminSession();
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen">
       <Nav />
-      <main className="mx-auto max-w-6xl px-6 py-6">{children}</main>
+      <main className="container-wide py-8">
+        <div className="grid gap-6 lg:grid-cols-[1fr]">{children}</div>
+      </main>
     </div>
   );
 }

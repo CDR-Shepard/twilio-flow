@@ -2,10 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: light;
+}
+
 body {
-  @apply bg-slate-50 text-slate-900;
+  @apply bg-slate-50 text-slate-900 antialiased;
+  background: radial-gradient(circle at 20% 20%, rgba(60, 99, 230, 0.08), transparent 35%),
+    radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.08), transparent 30%),
+    #f8fafc;
 }
 
 a {
-  @apply text-brand-600 hover:text-brand-700;
+  @apply text-brand-600 hover:text-brand-700 transition-colors;
+}
+
+.glass {
+  @apply bg-white/80 backdrop-blur-xl border border-white/60 shadow-lg shadow-slate-900/5;
+}
+
+.container-wide {
+  @apply mx-auto max-w-7xl px-6 md:px-10;
 }

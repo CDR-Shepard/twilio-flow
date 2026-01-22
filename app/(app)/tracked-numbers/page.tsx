@@ -16,9 +16,13 @@ export default async function TrackedNumbersPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-slate-900">Tracked numbers</h1>
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Numbers</p>
+        <h1 className="text-3xl font-bold text-slate-900">Tracked numbers</h1>
+        <p className="text-sm text-slate-600">Control which Twilio lines are live and where they route.</p>
+      </div>
 
-      <Card title="Add tracked number">
+      <Card title="Add tracked number" subtitle="We’ll normalize to E.164">
         <form action={createTrackedNumber} className="grid gap-4 sm:grid-cols-3">
           <div>
             <label className="text-sm font-medium text-slate-700">Friendly name</label>
@@ -36,7 +40,7 @@ export default async function TrackedNumbersPage() {
         </form>
       </Card>
 
-      <Card title="Numbers">
+      <Card title="Numbers" subtitle="Click any row to edit routing">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="text-left text-xs uppercase text-slate-500">
@@ -47,28 +51,33 @@ export default async function TrackedNumbersPage() {
                 <th className="px-2 py-1"></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100">
               {numbers?.map((num) => (
-                <tr key={num.id} className="border-t border-slate-100">
-                  <td className="px-2 py-2">
-                    <Link href={`/tracked-numbers/${num.id}`} className="font-medium text-brand-700">
+                <tr key={num.id} className="hover:bg-slate-50/50">
+                  <td className="px-3 py-3">
+                    <Link href={`/tracked-numbers/${num.id}`} className="font-semibold text-slate-900 hover:text-brand-700">
                       {num.friendly_name}
                     </Link>
                   </td>
-                  <td className="px-2 py-2">{num.twilio_phone_number}</td>
-                  <td className="px-2 py-2">
-                    <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
+                  <td className="px-3 py-3 text-slate-600">{num.twilio_phone_number}</td>
+                  <td className="px-3 py-3">
+                    <span
+                      className={clsx(
+                        "inline-flex rounded-full px-2 py-1 text-xs font-semibold",
+                        num.active ? "bg-accent-50 text-accent-700" : "bg-slate-100 text-slate-600"
+                      )}
+                    >
                       {num.active ? "Active" : "Inactive"}
                     </span>
                   </td>
-                  <td className="px-2 py-2 space-x-2 text-right">
+                  <td className="px-3 py-3 space-x-2 text-right">
                     <form action={toggleTrackedNumber.bind(null, num.id, !num.active)} className="inline">
-                      <Button type="submit" variant="secondary">
+                      <Button type="submit" variant="secondary" size="sm">
                         {num.active ? "Deactivate" : "Activate"}
                       </Button>
                     </form>
                     <form action={deleteTrackedNumber.bind(null, num.id)} className="inline">
-                      <Button type="submit" variant="ghost">
+                      <Button type="submit" variant="ghost" size="sm">
                         Delete
                       </Button>
                     </form>

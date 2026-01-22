@@ -35,7 +35,11 @@ export default async function CallLogsPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-slate-900">Call logs</h1>
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">History</p>
+        <h1 className="text-3xl font-bold text-slate-900">Call logs</h1>
+        <p className="text-sm text-slate-600">Search by number or status to find who answered and how long.</p>
+      </div>
 
       <Card>
         <div className="flex flex-wrap gap-3">

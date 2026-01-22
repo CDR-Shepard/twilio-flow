@@ -28,21 +28,28 @@ export default async function DashboardPage() {
   const recentCalls = (recentCallsResponse.data ?? []) as any[];
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
+    <div className="space-y-7">
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Overview</p>
+        <h1 className="text-3xl font-bold text-slate-900">Call Routing Control</h1>
+        <p className="text-sm text-slate-600">
+          Track volumes, active numbers, and who’s answering. Built for quick, confident routing tweaks.
+        </p>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card title="Tracked numbers">
-          <div className="text-3xl font-bold">{trackedCount ?? 0}</div>
+        <Card title="Tracked numbers" subtitle="Active phone lines">
+          <div className="text-4xl font-bold text-slate-900">{trackedCount ?? 0}</div>
         </Card>
-        <Card title="Active agents">
-          <div className="text-3xl font-bold">{agentCount ?? 0}</div>
+        <Card title="Active agents" subtitle="Ringing-ready">
+          <div className="text-4xl font-bold text-slate-900">{agentCount ?? 0}</div>
         </Card>
-        <Card title="Calls today">
-          <div className="text-3xl font-bold">{callsTodayResponse.count ?? 0}</div>
+        <Card title="Calls today" subtitle="Since midnight">
+          <div className="text-4xl font-bold text-slate-900">{callsTodayResponse.count ?? 0}</div>
         </Card>
       </div>
 
-      <Card title="Recent calls">
+      <Card title="Recent calls" subtitle="Latest 10 inbound">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="text-left text-xs uppercase text-slate-500">

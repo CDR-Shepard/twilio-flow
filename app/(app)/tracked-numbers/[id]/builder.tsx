@@ -114,13 +114,13 @@ export function CallFlowBuilder({
 
         <Column
           title="Ringing group"
-          hint="Top = first position; all ring simultaneously"
+          hint="Top to bottom order; all ring simultaneously"
           footer={
             <div className="flex items-center justify-between">
               <p className="text-xs text-slate-500">
                 {selected.length} agent{selected.length === 1 ? "" : "s"} in group
               </p>
-              <Button onClick={handleSave} loading={saving}>
+              <Button onClick={handleSave} loading={saving} variant="accent">
                 Save order
               </Button>
             </div>
@@ -167,9 +167,9 @@ function Droppable({ id, children }: { id: string; children: React.ReactNode }) 
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[220px] rounded-md border border-dashed ${
-        isOver ? "border-brand-400 bg-brand-50" : "border-slate-200"
-      }`}
+      className={`min-h-[220px] rounded-lg border border-dashed ${
+        isOver ? "border-accent-400 bg-accent-50" : "border-slate-200 bg-white/70"
+      } transition-colors`}
     >
       {children}
     </div>
@@ -204,7 +204,7 @@ function SortableItem({ id, item }: { id: string; item: Agent }) {
       style={style}
       {...attributes}
       {...listeners}
-      className="flex cursor-grab items-center justify-between bg-white px-3 py-3"
+      className="flex cursor-grab items-center justify-between bg-white px-3 py-3 shadow-sm hover:shadow-md rounded-md"
     >
       <div>
         <div className="text-sm font-medium text-slate-900">{item.full_name}</div>
