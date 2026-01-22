@@ -31,7 +31,7 @@ export default async function CallLogsPage({
   const { data: callsData } = await query;
   const calls =
     callsData?.map((c) => ({
-      id: c.id,
+      id: c.id as string,
       from_number: c.from_number,
       to_number: c.to_number,
       status: c.status,
