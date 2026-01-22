@@ -3,6 +3,7 @@ import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { createAgent, toggleAgent, deleteAgent } from "./actions";
+import clsx from "clsx";
 
 export default async function AgentsPage() {
   const { supabase } = await requireAdminSession();
