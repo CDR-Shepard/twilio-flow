@@ -105,7 +105,8 @@ export async function POST(request: Request) {
       });
     }
 
-    if (attemptStatus === "answered") {
+    // Ensure we capture the answering agent even if Twilio skips explicit "answered"
+    if (attemptStatus === "answered" || attemptStatus === "completed") {
       await supabaseAdmin
         .from("calls")
         .update({ status: "connected", connected_agent_id: agentId })
