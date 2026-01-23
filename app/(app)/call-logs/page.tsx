@@ -39,7 +39,8 @@ export default async function CallLogsPage({
     agents?: { full_name?: string | null } | null;
     tracked_numbers?: { friendly_name?: string | null } | null;
   };
-  const calls: CallRow[] = (callsData as CallRow[] | null) ?? [];
+  const calls: (CallRow & { voicemail_url?: string | null })[] =
+    (callsData as (CallRow & { voicemail_url?: string | null })[] | null) ?? [];
 
   return (
     <div className="space-y-6">
