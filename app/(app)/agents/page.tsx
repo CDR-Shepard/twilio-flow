@@ -2,7 +2,7 @@ import { requireAdminSession } from "../../../lib/auth";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
-import { createAgent, toggleAgent, deleteAgent } from "./actions";
+import { createAgent, toggleAgent } from "./actions";
 import clsx from "clsx";
 import { AgentDeleteButton } from "../../../components/agent-delete-button";
 
