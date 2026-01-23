@@ -13,7 +13,12 @@ export function AgentDeleteButton({ id }: Props) {
   const handleDelete = () => {
     if (!confirm("Delete this agent? This cannot be undone.")) return;
     startTransition(async () => {
-      await fetch(`/api/admin/agents/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/agents/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const msg = await res.text();
+        alert(`Delete failed: ${msg || res.status}`);
+        return;
+      }
       router.refresh();
     });
   };
