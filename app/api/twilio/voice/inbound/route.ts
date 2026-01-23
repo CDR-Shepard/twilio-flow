@@ -83,6 +83,11 @@ export async function POST(request: Request) {
   }
 
   const baseUrl = process.env.TWILIO_APP_BASE_URL;
+
+  if (trackedNumber.greeting_text) {
+    twiml.say({ voice: "Polly.Joanna" }, trackedNumber.greeting_text);
+  }
+
   const dial = twiml.dial({
     answerOnBridge: true,
     timeout: 25,
@@ -99,6 +104,19 @@ export async function POST(request: Request) {
       },
       agent.phone_number
     );
+  }
+
+  // If no one answered, route to voicemail if enabled
+  if (trackedNumber.voicemail_enabled) {
+    twiml.say(trackedNumber.voicemail_prompt || "Please leave a message after the tone.");
+    twiml.record({
+      action: `${baseUrl}/api/twilio/voice/voicemail?call_id=${callId}`,
+      method: "POST",
+      maxLength: 120,
+      playBeep: true
+    });
+  } else {
+    twiml.hangup();
   }
 
   return twimlResponse(twiml);

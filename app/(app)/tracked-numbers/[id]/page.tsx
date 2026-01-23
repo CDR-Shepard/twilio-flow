@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
 import { requireAdminSession } from "../../../../lib/auth";
 import { CallFlowBuilder } from "./builder";
-import { updateCallFlow } from "./actions";
+import { updateCallFlow, updateSettings } from "./actions";
+import { Card } from "../../../../components/ui/card";
+import { Button } from "../../../../components/ui/button";
+import { Input } from "../../../../components/ui/input";
 
 export default async function TrackedNumberDetailPage({ params }: { params: { id: string } }) {
   const { supabase } = await requireAdminSession();
@@ -58,6 +61,36 @@ export default async function TrackedNumberDetailPage({ params }: { params: { id
           {trackedNumber.friendly_name} ({trackedNumber.twilio_phone_number})
         </h1>
       </div>
+
+      <Card title="Call settings" subtitle="Greeting and voicemail">
+        <form className="grid gap-4 md:grid-cols-2" action={async (formData) => {
+          "use server";
+          await updateSettings(trackedNumber.id, {
+            greeting_text: (formData.get("greeting_text") as string) || null,
+            voicemail_enabled: formData.get("voicemail_enabled") === "on",
+            voicemail_prompt: (formData.get("voicemail_prompt") as string) || null
+          });
+        }}>
+          <div className="md:col-span-2 space-y-2">
+            <label className="text-sm font-semibold text-slate-800">Greeting (played first)</label>
+            <Input name="greeting_text" defaultValue={trackedNumber.greeting_text ?? ""} placeholder="Thanks for calling..." />
+            <p className="text-xs text-slate-500">We’ll use Twilio TTS to play this.</p>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+              <input type="checkbox" name="voicemail_enabled" defaultChecked={trackedNumber.voicemail_enabled ?? false} />
+              Enable voicemail if no one answers
+            </label>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-800">Voicemail prompt</label>
+            <Input name="voicemail_prompt" defaultValue={trackedNumber.voicemail_prompt ?? "Please leave a message after the tone."} />
+          </div>
+          <div className="md:col-span-2">
+            <Button type="submit">Save settings</Button>
+          </div>
+        </form>
+      </Card>
 
       <CallFlowBuilder initialAvailable={available} initialSelected={selected} onSave={updateCallFlow.bind(null, params.id)} />
     </div>
