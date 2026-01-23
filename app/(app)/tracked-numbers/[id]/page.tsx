@@ -66,9 +66,9 @@ export default async function TrackedNumberDetailPage({ params }: { params: { id
         <form className="grid gap-4 md:grid-cols-2" action={async (formData) => {
           "use server";
           await updateSettings(trackedNumber.id, {
-            greeting_text: (formData.get("greeting_text") as string) || null,
+            greeting_text: (formData.get("greeting_text") as string) || undefined,
             voicemail_enabled: formData.get("voicemail_enabled") === "on",
-            voicemail_prompt: (formData.get("voicemail_prompt") as string) || null
+            voicemail_prompt: (formData.get("voicemail_prompt") as string) || undefined
           });
         }}>
           <div className="md:col-span-2 space-y-2">
