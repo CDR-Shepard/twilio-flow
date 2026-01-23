@@ -61,6 +61,9 @@ export type Database = {
           active: boolean;
           created_at: string;
           updated_at: string;
+          greeting_text?: string | null;
+          voicemail_enabled?: boolean | null;
+          voicemail_prompt?: string | null;
         };
         Insert: {
           id?: string;
@@ -70,6 +73,9 @@ export type Database = {
           active?: boolean;
           created_at?: string;
           updated_at?: string;
+          greeting_text?: string | null;
+          voicemail_enabled?: boolean | null;
+          voicemail_prompt?: string | null;
         };
         Update: {
           id?: string;
@@ -79,6 +85,9 @@ export type Database = {
           active?: boolean;
           created_at?: string;
           updated_at?: string;
+          greeting_text?: string | null;
+          voicemail_enabled?: boolean | null;
+          voicemail_prompt?: string | null;
         };
       };
       tracked_number_routes: {
@@ -119,6 +128,8 @@ export type Database = {
           status: string;
           connected_agent_id: string | null;
           created_at: string;
+          voicemail_url?: string | null;
+          voicemail_sid?: string | null;
         };
         Insert: {
           id?: string;
@@ -131,6 +142,8 @@ export type Database = {
           status?: string;
           connected_agent_id?: string | null;
           created_at?: string;
+          voicemail_url?: string | null;
+          voicemail_sid?: string | null;
         };
         Update: {
           id?: string;
@@ -143,6 +156,8 @@ export type Database = {
           status?: string;
           connected_agent_id?: string | null;
           created_at?: string;
+          voicemail_url?: string | null;
+          voicemail_sid?: string | null;
         };
       };
       call_attempts: {
