@@ -59,7 +59,7 @@ export default async function DashboardPage() {
 
       <Card title="Recent calls" subtitle="Latest 10 inbound">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
+          <table className="min-w-full text-sm table-sticky">
             <thead className="text-left text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-2 py-1">Started</th>

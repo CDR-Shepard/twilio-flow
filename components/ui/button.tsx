@@ -22,7 +22,7 @@ export function Button({
       className={clsx(
         "inline-flex items-center justify-center rounded-lg font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-brand-200 focus:ring-offset-1",
         size === "md" ? "px-3.5 py-2.5 text-sm" : "px-2.5 py-1.5 text-xs",
-        variant === "primary" && "bg-brand-600 text-white shadow-sm hover:bg-brand-700 active:translate-y-[1px]",
+        variant === "primary" && "bg-slate-900 text-white shadow-sm hover:bg-slate-800 active:translate-y-[1px]",
         variant === "accent" && "bg-accent-500 text-white shadow-sm hover:bg-accent-600 active:translate-y-[1px]",
         variant === "secondary" &&
           "bg-white text-slate-900 border border-slate-200 hover:border-slate-300 hover:bg-slate-50",

@@ -29,12 +29,12 @@ export function Nav() {
         <div className="flex items-center gap-4">
           <Link
             href="/dashboard"
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 text-sm font-bold text-white shadow-md shadow-brand-500/20 transition hover:opacity-90"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-sm font-bold text-white shadow-md shadow-slate-900/15 transition hover:opacity-90"
             aria-label="Go to dashboard"
           >
             GG
           </Link>
-          <nav className="flex items-center gap-2">
+          <nav className="flex items-center gap-1">
             {links.map((link) => {
               const active = pathname?.startsWith(link.href);
               return (
@@ -42,10 +42,8 @@ export function Nav() {
                   key={link.href}
                   href={link.href}
                   className={clsx(
-                    "rounded-full px-3.5 py-2 text-sm font-semibold transition-colors",
-                    active
-                      ? "bg-slate-900 text-white shadow-sm"
-                      : "text-slate-700 hover:bg-slate-100"
+                    "rounded-md px-3 py-2 text-sm font-semibold transition-colors",
+                    active ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100"
                   )}
                 >
                   {link.label}

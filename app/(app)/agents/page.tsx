@@ -41,7 +41,7 @@ export default async function AgentsPage() {
 
       <Card title="Active agents" subtitle="Tap to toggle or remove">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
+          <table className="min-w-full text-sm table-sticky">
             <thead className="text-left text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-3 py-2">Name</th>

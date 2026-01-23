@@ -80,7 +80,7 @@ export default async function CallLogsPage({
 
       <Card>
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
+          <table className="min-w-full text-sm table-sticky">
             <thead className="text-left text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-2 py-1">Started</th>
