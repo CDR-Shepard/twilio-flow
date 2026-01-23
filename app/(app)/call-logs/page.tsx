@@ -16,7 +16,7 @@ export default async function CallLogsPage({
   let query = supabase
     .from("calls")
     .select(
-      "id, from_number, to_number, status, started_at, ended_at, connected_agent_id, agents:connected_agent_id(full_name), tracked_numbers:tracked_number_id(friendly_name)"
+      "id, from_number, to_number, status, started_at, ended_at, connected_agent_id, voicemail_url, agents:connected_agent_id(full_name), tracked_numbers:tracked_number_id(friendly_name)"
     )
     .order("started_at", { ascending: false })
     .limit(50);
@@ -89,6 +89,7 @@ export default async function CallLogsPage({
                 <th className="px-2 py-1">Status</th>
                 <th className="px-2 py-1">Answered by</th>
                 <th className="px-2 py-1">Duration</th>
+                <th className="px-2 py-1">Voicemail</th>
               </tr>
             </thead>
             <tbody>
@@ -107,6 +108,20 @@ export default async function CallLogsPage({
                           (new Date(call.ended_at).getTime() - new Date(call.started_at).getTime()) / 1000
                         ) + "s"
                       : "—"}
+                  </td>
+                  <td className="px-2 py-2">
+                    {call.voicemail_url ? (
+                      <a
+                        className="text-brand-600 hover:text-brand-700"
+                        href={`${call.voicemail_url}.mp3`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Play
+                      </a>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                 </tr>
               ))}

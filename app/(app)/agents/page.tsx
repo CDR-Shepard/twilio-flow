@@ -4,6 +4,7 @@ import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { createAgent, toggleAgent, deleteAgent } from "./actions";
 import clsx from "clsx";
+import { AgentDeleteButton } from "../../../components/agent-delete-button";
 
 export default async function AgentsPage() {
   const { supabase } = await requireAdminSession();
@@ -71,11 +72,7 @@ export default async function AgentsPage() {
                         {agent.active ? "Deactivate" : "Activate"}
                       </Button>
                     </form>
-                    <form action={deleteAgent.bind(null, agent.id)} className="inline">
-                      <Button type="submit" variant="ghost" size="sm">
-                        Delete
-                      </Button>
-                    </form>
+                    <AgentDeleteButton id={agent.id} />
                   </td>
                 </tr>
               ))}
