@@ -90,9 +90,11 @@ export async function POST(request: Request) {
 
   const dial = twiml.dial({
     answerOnBridge: true,
-    timeout: 25,
+    timeout: 20, // shorter than typical carrier voicemail pickup
+    callerId: trackedNumber.twilio_phone_number, // mask caller ID to agents
     action: `${baseUrl}/api/twilio/voice/status?call_id=${callId}&scope=parent`,
-    method: "POST"
+    method: "POST",
+    machineDetection: "Enable"
   });
 
   for (const agent of activeAgents) {
