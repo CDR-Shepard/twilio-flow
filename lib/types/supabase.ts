@@ -130,6 +130,9 @@ export type Database = {
           created_at: string;
           voicemail_url?: string | null;
           voicemail_sid?: string | null;
+          recording_url?: string | null;
+          recording_sid?: string | null;
+          recording_duration_seconds?: number | null;
         };
         Insert: {
           id?: string;
@@ -144,6 +147,9 @@ export type Database = {
           created_at?: string;
           voicemail_url?: string | null;
           voicemail_sid?: string | null;
+          recording_url?: string | null;
+          recording_sid?: string | null;
+          recording_duration_seconds?: number | null;
         };
         Update: {
           id?: string;
@@ -158,6 +164,9 @@ export type Database = {
           created_at?: string;
           voicemail_url?: string | null;
           voicemail_sid?: string | null;
+          recording_url?: string | null;
+          recording_sid?: string | null;
+          recording_duration_seconds?: number | null;
         };
       };
       call_attempts: {

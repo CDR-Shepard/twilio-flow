@@ -53,6 +53,7 @@ Access `http://localhost:3000/login` and sign in with your Supabase email/passwo
 ## API / call handling
 - `/api/twilio/voice/inbound`: validates signature, finds tracked number, upserts call row, fetches assigned agents, responds with TwiML `<Dial>` containing all agent numbers (simul-ring). Dial action posts to `/api/twilio/voice/status`.
 - `/api/twilio/voice/status`: validates signature; updates `calls` and `call_attempts` based on Twilio status events. First answered agent is stored as `connected_agent_id`.
+- `/api/twilio/voice/recording`: Twilio RecordingStatusCallback for the call-level recording; stores recording URL/SID and duration on the call.
 
 ## Notes / future improvements
 - Voicemail or fallback message when no agents answer.

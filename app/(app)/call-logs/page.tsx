@@ -16,7 +16,7 @@ export default async function CallLogsPage({
   let query = supabase
     .from("calls")
     .select(
-      "id, from_number, to_number, status, started_at, ended_at, connected_agent_id, voicemail_url, agents:connected_agent_id(full_name), tracked_numbers:tracked_number_id(friendly_name)"
+      "id, from_number, to_number, status, started_at, ended_at, connected_agent_id, voicemail_url, recording_url, recording_duration_seconds, agents:connected_agent_id(full_name), tracked_numbers:tracked_number_id(friendly_name)"
     )
     .order("started_at", { ascending: false })
     .limit(50);
@@ -38,11 +38,16 @@ export default async function CallLogsPage({
     ended_at: string | null;
     agents?: { full_name?: string | null } | null;
     tracked_numbers?: { friendly_name?: string | null } | null;
+    voicemail_url?: string | null;
+    recording_url?: string | null;
+    recording_duration_seconds?: number | null;
   };
-  const calls: (CallRow & { voicemail_url?: string | null })[] =
-    (callsData as (CallRow & { voicemail_url?: string | null })[] | null)?.map((c) => ({
+  const calls: CallRow[] =
+    (callsData as CallRow[] | null)?.map((c) => ({
       ...c,
-      voicemail_url: c.voicemail_url ?? null
+      voicemail_url: c.voicemail_url ?? null,
+      recording_url: c.recording_url ?? null,
+      recording_duration_seconds: c.recording_duration_seconds ?? null
     })) ?? [];
 
   return (
@@ -93,6 +98,7 @@ export default async function CallLogsPage({
                 <th className="px-2 py-1">Status</th>
                 <th className="px-2 py-1">Answered by</th>
                 <th className="px-2 py-1">Duration</th>
+                <th className="px-2 py-1">Recording</th>
                 <th className="px-2 py-1">Voicemail</th>
               </tr>
             </thead>
@@ -114,6 +120,27 @@ export default async function CallLogsPage({
                       : "—"}
                   </td>
                   <td className="px-2 py-2">
+                    {call.recording_url ? (
+                      <div className="flex items-center gap-1">
+                        <a
+                          className="text-brand-600 hover:text-brand-700"
+                          href={`${call.recording_url}.mp3`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Play
+                        </a>
+                        {call.recording_duration_seconds ? (
+                          <span className="text-xs text-slate-500">
+                            ({Math.round(call.recording_duration_seconds)}s)
+                          </span>
+                        ) : null}
+                      </div>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td className="px-2 py-2">
                     {call.voicemail_url ? (
                       <a
                         className="text-brand-600 hover:text-brand-700"
@@ -131,7 +158,7 @@ export default async function CallLogsPage({
               ))}
               {(!calls || calls.length === 0) && (
                 <tr>
-                  <td colSpan={6} className="px-2 py-4 text-center text-slate-500">
+                  <td colSpan={8} className="px-2 py-4 text-center text-slate-500">
                     No calls yet.
                   </td>
                 </tr>

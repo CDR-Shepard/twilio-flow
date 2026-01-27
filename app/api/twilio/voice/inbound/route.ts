@@ -93,7 +93,11 @@ export async function POST(request: Request) {
     timeout: 20, // shorter than typical carrier voicemail pickup
     callerId: trackedNumber.twilio_phone_number, // mask caller ID to agents
     action: `${baseUrl}/api/twilio/voice/status?call_id=${callId}&scope=parent`,
-    method: "POST"
+    method: "POST",
+    record: "record-from-answer-dual",
+    recordingStatusCallback: `${baseUrl}/api/twilio/voice/recording`,
+    recordingStatusCallbackEvent: "completed",
+    recordingStatusCallbackMethod: "POST"
   });
 
   for (const agent of activeAgents) {
