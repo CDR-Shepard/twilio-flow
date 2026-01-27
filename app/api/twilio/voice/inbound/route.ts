@@ -96,7 +96,7 @@ export async function POST(request: Request) {
     method: "POST",
     record: "record-from-answer-dual",
     recordingStatusCallback: `${baseUrl}/api/twilio/voice/recording`,
-    recordingStatusCallbackEvent: "completed",
+    recordingStatusCallbackEvent: ["completed"],
     recordingStatusCallbackMethod: "POST"
   });
 
