@@ -26,9 +26,9 @@ export function Nav() {
   }
 
   return (
-    <aside className="group/nav hidden min-h-screen w-[72px] flex-col border-r border-slate-200 bg-white/90 backdrop-blur-xl shadow-sm transition-[width] duration-200 hover:w-[240px] md:flex">
+    <aside className="group/nav hidden min-h-screen w-[76px] flex-col border-r border-white/40 bg-white/40 backdrop-blur-3xl shadow-lg shadow-slate-900/10 transition-[width] duration-200 hover:w-[260px] md:flex">
       <div className="flex items-center gap-3 px-4 py-5">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-sm font-bold text-white shadow-md shadow-slate-900/15">
+        <div className="glass-strong flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-bold text-slate-900">
           CF
         </div>
         <div className="opacity-0 transition-opacity duration-150 group-hover/nav:opacity-100">
@@ -36,7 +36,7 @@ export function Nav() {
           <div className="text-xs text-slate-500">Admin</div>
         </div>
       </div>
-      <nav className="flex-1 space-y-1 px-2">
+      <nav className="flex-1 space-y-2 px-3">
         {links.map((link) => {
           const active = pathname?.startsWith(link.href);
           const Icon = link.icon;
@@ -45,14 +45,14 @@ export function Nav() {
               key={link.href}
               href={link.href}
               className={clsx(
-                "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold transition-all glass-pill",
                 active
-                  ? "bg-brand-50 text-brand-700 ring-1 ring-brand-100"
-                  : "text-slate-700 hover:bg-slate-100"
+                  ? "ring-2 ring-brand-200 text-slate-900 shadow-lg shadow-brand-200/40"
+                  : "text-slate-700 hover:ring-1 hover:ring-white/60 hover:shadow-md hover:shadow-slate-900/10"
               )}
               title={link.label}
             >
-              <Icon className="h-5 w-5 flex-shrink-0 text-slate-600 group-hover:text-slate-800" />
+              <Icon className="h-5 w-5 flex-shrink-0 text-slate-700 group-hover:text-slate-900" />
               <span className="truncate opacity-0 transition-[opacity,margin] duration-150 group-hover/nav:opacity-100">
                 {link.label}
               </span>
@@ -63,7 +63,7 @@ export function Nav() {
       <div className="px-3 pb-5 pt-2">
         <button
           onClick={handleSignOut}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+          className="glass-pill flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold text-slate-700 transition hover:ring-1 hover:ring-white/60"
         >
           <LogOut className="h-5 w-5" />
           <span className="opacity-0 transition-opacity duration-150 group-hover/nav:opacity-100">Sign out</span>
