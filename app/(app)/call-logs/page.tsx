@@ -5,21 +5,37 @@ import { CallLogsTable } from "./CallLogsTable";
 export default async function CallLogsPage({
   searchParams
 }: {
-  searchParams: { tracked_number_id?: string; status?: string };
+  searchParams: { tracked_number_id?: string; status?: string; agent_id?: string; q?: string; from?: string; to?: string };
 }) {
   const { supabase } = await requireAdminSession();
 
   type TrackedNumber = import("../../../lib/types/supabase").Database["public"]["Tables"]["tracked_numbers"]["Row"];
+  type Agent = import("../../../lib/types/supabase").Database["public"]["Tables"]["agents"]["Row"];
   const { data: numbersData } = await supabase.from("tracked_numbers").select("id, friendly_name");
   const numbers: Pick<TrackedNumber, "id" | "friendly_name">[] = numbersData ?? [];
+  const { data: agentsData } = await supabase.from("agents").select("id, full_name").eq("active", true);
+  const agents: Pick<Agent, "id" | "full_name">[] = agentsData ?? [];
 
-  const { data: callsData } = await supabase
+  let callsQuery = supabase
     .from("calls")
     .select(
       "id, from_number, to_number, status, started_at, ended_at, connected_agent_id, voicemail_url, recording_url, recording_sid, recording_duration_seconds, agents:connected_agent_id(full_name), tracked_numbers:tracked_number_id(friendly_name)"
     )
     .order("started_at", { ascending: false })
     .limit(100);
+
+  if (searchParams.tracked_number_id) callsQuery = callsQuery.eq("tracked_number_id", searchParams.tracked_number_id);
+  if (searchParams.status) callsQuery = callsQuery.eq("status", searchParams.status);
+  if (searchParams.from) callsQuery = callsQuery.gte("started_at", searchParams.from);
+  if (searchParams.to) callsQuery = callsQuery.lte("started_at", searchParams.to);
+  if (searchParams.q) callsQuery = callsQuery.or(
+    `from_number.ilike.%${searchParams.q}%,to_number.ilike.%${searchParams.q}%`
+  );
+  if (searchParams.agent_id) callsQuery = callsQuery.or(
+    `connected_agent_id.eq.${searchParams.agent_id}`
+  );
+
+  const { data: callsData } = await callsQuery;
 
   type CallRow = {
     id: string;
@@ -54,13 +70,27 @@ export default async function CallLogsPage({
       </div>
 
       <Card>
-        <div className="flex flex-wrap gap-3">
-          <form className="flex gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
+          <form className="flex flex-wrap gap-2 items-center">
+            <input
+              name="q"
+              defaultValue={searchParams.q ?? ""}
+              placeholder="Search caller or number"
+              className="w-48 rounded-md border border-slate-200 px-3 py-2 text-sm"
+            />
             <select name="tracked_number_id" defaultValue={searchParams.tracked_number_id ?? ""} className="rounded-md border border-slate-200 px-3 py-2 text-sm">
               <option value="">All numbers</option>
               {numbers?.map((n) => (
                 <option key={n.id} value={n.id}>
                   {n.friendly_name}
+                </option>
+              ))}
+            </select>
+            <select name="agent_id" defaultValue={searchParams.agent_id ?? ""} className="rounded-md border border-slate-200 px-3 py-2 text-sm">
+              <option value="">Any agent</option>
+              {agents?.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.full_name}
                 </option>
               ))}
             </select>
@@ -72,11 +102,13 @@ export default async function CallLogsPage({
               <option value="completed">Completed</option>
               <option value="failed">Failed</option>
             </select>
+            <input type="date" name="from" defaultValue={searchParams.from ?? ""} className="rounded-md border border-slate-200 px-3 py-2 text-sm" />
+            <input type="date" name="to" defaultValue={searchParams.to ?? ""} className="rounded-md border border-slate-200 px-3 py-2 text-sm" />
             <button
               type="submit"
               className="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
             >
-              Filter
+              Apply
             </button>
           </form>
         </div>

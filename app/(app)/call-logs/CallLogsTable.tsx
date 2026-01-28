@@ -26,23 +26,34 @@ type CallRow = {
   recording_duration_seconds?: number | null;
 };
 
+type CallDetail = CallRow & {
+  call_attempts?: { status?: string | null; agent_id?: string | null; started_at?: string | null; ended_at?: string | null }[];
+};
+
 export function CallLogsTable({
   initialCalls,
   searchParams
 }: {
   initialCalls: CallRow[];
-  searchParams: { tracked_number_id?: string; status?: string };
+  searchParams: { tracked_number_id?: string; status?: string; agent_id?: string; q?: string; from?: string; to?: string };
 }) {
   const queryString = useMemo(() => {
     const query = new URLSearchParams();
     if (searchParams.tracked_number_id) query.set("tracked_number_id", searchParams.tracked_number_id);
     if (searchParams.status) query.set("status", searchParams.status);
+    if (searchParams.agent_id) query.set("agent_id", searchParams.agent_id);
+    if (searchParams.q) query.set("q", searchParams.q);
+    if (searchParams.from) query.set("from", searchParams.from);
+    if (searchParams.to) query.set("to", searchParams.to);
     query.set("limit", "100");
     return query.toString();
-  }, [searchParams.status, searchParams.tracked_number_id]);
+  }, [searchParams.tracked_number_id, searchParams.status, searchParams.agent_id, searchParams.q, searchParams.from, searchParams.to]);
 
   const [calls, setCalls] = useState<CallRow[]>(initialCalls);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<CallDetail | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
 
   useEffect(() => {
     const fetchLatest = async () => {
@@ -66,6 +77,20 @@ export function CallLogsTable({
 
   const chart = useMemo(() => buildChartPoints(calls), [calls]);
 
+  const openDetail = async (id: string) => {
+    setSelectedId(id);
+    setLoadingDetail(true);
+    try {
+      const res = await fetch(`/api/calls/${id}`);
+      if (res.ok) {
+        const json = await res.json();
+        setSelected(json.call as CallDetail);
+      }
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -86,9 +111,7 @@ export function CallLogsTable({
         </div>
         <div className="w-full overflow-hidden">
           <svg viewBox="0 0 700 220" role="img" aria-label="Calls in last 7 days" className="w-full">
-            {/* baseline */}
             <line x1="40" x2="660" y1="180" y2="180" stroke="#e5e7eb" strokeWidth="1" />
-            {/* polyline */}
             <polyline
               fill="none"
               stroke="#2563eb"
@@ -127,7 +150,11 @@ export function CallLogsTable({
             </thead>
             <tbody>
               {calls?.map((call) => (
-                <tr key={call.id} className="border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                <tr
+                  key={call.id}
+                  className="border-t border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer"
+                  onClick={() => openDetail(call.id)}
+                >
                   <td className="px-3 py-2 whitespace-nowrap">{format(new Date(call.started_at), "PP p")}</td>
                   <td className="px-3 py-2 font-mono text-xs">{call.from_number ?? "Unknown"}</td>
                   <td className="px-3 py-2">{call.tracked_numbers?.friendly_name ?? call.to_number ?? "—"}</td>
@@ -191,6 +218,104 @@ export function CallLogsTable({
           </table>
         </div>
       </div>
+
+      {selectedId ? (
+        <div className="fixed inset-0 z-30 flex items-start justify-end bg-black/30 backdrop-blur-sm">
+          <div className="h-full w-full max-w-xl overflow-y-auto bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Call detail</p>
+                <p className="text-sm font-semibold text-slate-900">{selected?.from_number ?? "Unknown caller"}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedId(null);
+                  setSelected(null);
+                }}
+                className="rounded-md px-2 py-1 text-sm text-slate-600 hover:bg-slate-100"
+              >
+                Close
+              </button>
+            </div>
+            <div className="space-y-4 p-4">
+              {loadingDetail && <p className="text-sm text-slate-500">Loading…</p>}
+              {selected && (
+                <>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-xs text-slate-500">Started</p>
+                      <p className="font-medium">{format(new Date(selected.started_at), "PP p")}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">Status</p>
+                      <p className="font-medium capitalize">{selected.status}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">Tracked number</p>
+                      <p className="font-medium">{selected.tracked_numbers?.friendly_name ?? selected.to_number ?? "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">Answered by</p>
+                      <p className="font-medium">{selected.agents?.full_name ?? "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">Duration</p>
+                      <p className="font-medium">
+                        {selected.ended_at
+                          ? Math.round(
+                              (new Date(selected.ended_at).getTime() - new Date(selected.started_at).getTime()) / 1000
+                            ) + "s"
+                          : "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-[0.15em] text-slate-500">Audio</p>
+                    {selected.recording_url ? (
+                      <audio
+                        className="w-full"
+                        controls
+                        preload="none"
+                        src={
+                          selected.recording_sid
+                            ? `/api/recordings/${selected.recording_sid}`
+                            : `${selected.recording_url}.mp3`
+                        }
+                      />
+                    ) : (
+                      <p className="text-sm text-slate-500">No recording</p>
+                    )}
+                    {selected.voicemail_url ? (
+                      <audio className="w-full" controls preload="none" src={`${selected.voicemail_url}.mp3`} />
+                    ) : null}
+                  </div>
+
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.15em] text-slate-500 mb-1">Attempts</p>
+                    <div className="space-y-2 text-sm">
+                      {(selected.call_attempts ?? []).map((a, idx) => (
+                        <div key={idx} className="rounded-md border border-slate-200 px-3 py-2">
+                          <div className="flex justify-between">
+                            <span className="font-medium capitalize">{a.status ?? "initiated"}</span>
+                            <span className="text-xs text-slate-500">
+                              {a.started_at ? format(new Date(a.started_at), "PP p") : "—"}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500">Agent: {a.agent_id ?? "unknown"}</p>
+                        </div>
+                      ))}
+                      {(selected.call_attempts ?? []).length === 0 && (
+                        <p className="text-sm text-slate-500">No leg events captured.</p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -209,7 +334,7 @@ function buildChartPoints(calls: CallRow[]) {
   const xMin = 40;
   const xMax = 660;
   const yBase = 180;
-  const yMaxLift = 120; // vertical drawing height
+  const yMaxLift = 120;
   const pointsArr = counts.map((c, i) => {
     const x = xMin + ((xMax - xMin) * i) / 6;
     const y = yBase - (c / max) * yMaxLift;
