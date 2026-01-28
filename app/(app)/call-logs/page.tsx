@@ -1,5 +1,4 @@
 import { requireAdminSession } from "../../../lib/auth";
-import { Card } from "../../../components/ui/card";
 import { CallLogsTable } from "./CallLogsTable";
 
 export default async function CallLogsPage({
@@ -74,50 +73,48 @@ export default async function CallLogsPage({
         </p>
       </div>
 
-      <Card className="glass-strong">
-        <div className="flex flex-wrap gap-2 items-center">
-          <form className="flex flex-wrap gap-2 items-center">
-            <input
-              name="q"
-              defaultValue={searchParams.q ?? ""}
-              placeholder="Search caller or number"
-              className="glass-pill w-48 rounded-xl border border-white/60 px-3 py-2 text-sm"
-            />
-            <select name="tracked_number_id" defaultValue={searchParams.tracked_number_id ?? ""} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm">
-              <option value="">All numbers</option>
-              {numbers?.map((n) => (
-                <option key={n.id} value={n.id}>
-                  {n.friendly_name}
-                </option>
-              ))}
-            </select>
-            <select name="agent_id" defaultValue={searchParams.agent_id ?? ""} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm">
-              <option value="">Any agent</option>
-              {agents?.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.full_name}
-                </option>
-              ))}
-            </select>
-            <select name="status" defaultValue={searchParams.status ?? ""} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm">
-              <option value="">Any status</option>
-              <option value="initiated">Initiated</option>
-              <option value="ringing">Ringing</option>
-              <option value="connected">Connected</option>
-              <option value="completed">Completed</option>
-              <option value="failed">Failed</option>
-            </select>
-            <input type="date" name="from" defaultValue={searchParams.from ?? ""} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm" />
-            <input type="date" name="to" defaultValue={searchParams.to ?? ""} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm" />
-            <button
-              type="submit"
-              className="glass-pill rounded-xl bg-brand-600/90 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-600"
-            >
-              Apply
-            </button>
-          </form>
-        </div>
-      </Card>
+      <div className="flex flex-wrap gap-2 items-center">
+        <form className="flex flex-wrap gap-2 items-center">
+          <input
+            name="q"
+            defaultValue={searchParams.q ?? ""}
+            placeholder="Search caller or number"
+            className="glass-pill w-48 rounded-xl border border-white/60 px-3 py-2 text-sm"
+          />
+          <select name="tracked_number_id" defaultValue={searchParams.tracked_number_id ?? ""} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm">
+            <option value="">All numbers</option>
+            {numbers?.map((n) => (
+              <option key={n.id} value={n.id}>
+                {n.friendly_name}
+              </option>
+            ))}
+          </select>
+          <select name="agent_id" defaultValue={searchParams.agent_id ?? ""} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm">
+            <option value="">Any agent</option>
+            {agents?.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.full_name}
+              </option>
+            ))}
+          </select>
+          <select name="status" defaultValue={searchParams.status ?? ""} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm">
+            <option value="">Any status</option>
+            <option value="initiated">Initiated</option>
+            <option value="ringing">Ringing</option>
+            <option value="connected">Connected</option>
+            <option value="completed">Completed</option>
+            <option value="failed">Failed</option>
+          </select>
+          <input type="date" name="from" defaultValue={searchParams.from ?? ""} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm" />
+          <input type="date" name="to" defaultValue={searchParams.to ?? ""} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm" />
+          <button
+            type="submit"
+            className="glass-pill rounded-xl bg-brand-600/90 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+          >
+            Apply
+          </button>
+        </form>
+      </div>
 
       <CallLogsTable initialCalls={calls} searchParams={searchParams} />
     </div>

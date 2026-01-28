@@ -47,42 +47,40 @@ export default async function DashboardPage({
         </p>
       </div>
 
-      <Card className="glass-strong">
-        <form className="flex flex-wrap items-center gap-2" method="get">
-          <div className="flex flex-wrap gap-2">
-            {presetLinks.map((p) => (
-              <a
-                key={p.label}
-                href={p.href}
-                className="glass-pill rounded-full px-3 py-2 text-sm font-medium text-slate-800 hover:ring-1 hover:ring-white/70"
-              >
-                {p.label}
-              </a>
-            ))}
-          </div>
-          <input type="date" name="from" defaultValue={from.toISOString().slice(0, 10)} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm" />
-          <input type="date" name="to" defaultValue={to.toISOString().slice(0, 10)} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm" />
-          <select name="tracked_number_id" defaultValue={searchParams?.tracked_number_id ?? ""} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm">
-            <option value="">All numbers</option>
-            {numbers.map((n) => (
-              <option key={n.id} value={n.id}>
-                {n.friendly_name}
-              </option>
-            ))}
-          </select>
-          <select name="agent_id" defaultValue={searchParams?.agent_id ?? ""} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm">
-            <option value="">Any agent</option>
-            {agents.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.full_name}
-              </option>
-            ))}
-          </select>
-          <button type="submit" className="glass-pill rounded-xl bg-brand-600/90 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-600">
-            Apply
-          </button>
-        </form>
-      </Card>
+      <form className="flex flex-wrap items-center gap-2" method="get">
+        <div className="flex flex-wrap gap-2">
+          {presetLinks.map((p) => (
+            <a
+              key={p.label}
+              href={p.href}
+              className="glass-pill rounded-full px-3 py-2 text-sm font-medium text-slate-800 hover:ring-1 hover:ring-white/70"
+            >
+              {p.label}
+            </a>
+          ))}
+        </div>
+        <input type="date" name="from" defaultValue={from.toISOString().slice(0, 10)} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm" />
+        <input type="date" name="to" defaultValue={to.toISOString().slice(0, 10)} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm" />
+        <select name="tracked_number_id" defaultValue={searchParams?.tracked_number_id ?? ""} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm">
+          <option value="">All numbers</option>
+          {numbers.map((n) => (
+            <option key={n.id} value={n.id}>
+              {n.friendly_name}
+            </option>
+          ))}
+        </select>
+        <select name="agent_id" defaultValue={searchParams?.agent_id ?? ""} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm">
+          <option value="">Any agent</option>
+          {agents.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.full_name}
+            </option>
+          ))}
+        </select>
+        <button type="submit" className="glass-pill rounded-xl bg-brand-600/90 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-600">
+          Apply
+        </button>
+      </form>
 
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <Kpi label="Total" value={metrics.summary.total} />
