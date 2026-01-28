@@ -167,7 +167,7 @@ export function CallLogsTable({
       <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="text-left text-xs uppercase text-slate-500">
+            <thead className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm text-left text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-3 py-2">Started</th>
                 <th className="px-3 py-2">Caller</th>

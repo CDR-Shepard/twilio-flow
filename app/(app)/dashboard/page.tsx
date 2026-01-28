@@ -4,6 +4,7 @@ import { loadMetrics } from "../../../lib/metrics";
 import { TrendChart } from "../../../components/trend-chart";
 import { NumberBarChart } from "../../../components/number-bar-chart";
 import { HourHeatmap } from "../../../components/hour-heatmap";
+import { PhoneCall, Voicemail, PhoneMissed, Clock4, AlertTriangle, Percent } from "lucide-react";
 
 function formatSeconds(value: number | null) {
   if (value == null) return "—";
@@ -46,22 +47,22 @@ export default async function DashboardPage({
         </p>
       </div>
 
-      <Card>
+      <Card className="glass-strong">
         <form className="flex flex-wrap items-center gap-2" method="get">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {presetLinks.map((p) => (
               <a
                 key={p.label}
                 href={p.href}
-                className="rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="glass-pill rounded-full px-3 py-2 text-sm font-medium text-slate-800 hover:ring-1 hover:ring-white/70"
               >
                 {p.label}
               </a>
             ))}
           </div>
-          <input type="date" name="from" defaultValue={from.toISOString().slice(0, 10)} className="rounded-md border border-slate-200 px-3 py-2 text-sm" />
-          <input type="date" name="to" defaultValue={to.toISOString().slice(0, 10)} className="rounded-md border border-slate-200 px-3 py-2 text-sm" />
-          <select name="tracked_number_id" defaultValue={searchParams?.tracked_number_id ?? ""} className="rounded-md border border-slate-200 px-3 py-2 text-sm">
+          <input type="date" name="from" defaultValue={from.toISOString().slice(0, 10)} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm" />
+          <input type="date" name="to" defaultValue={to.toISOString().slice(0, 10)} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm" />
+          <select name="tracked_number_id" defaultValue={searchParams?.tracked_number_id ?? ""} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm">
             <option value="">All numbers</option>
             {numbers.map((n) => (
               <option key={n.id} value={n.id}>
@@ -69,7 +70,7 @@ export default async function DashboardPage({
               </option>
             ))}
           </select>
-          <select name="agent_id" defaultValue={searchParams?.agent_id ?? ""} className="rounded-md border border-slate-200 px-3 py-2 text-sm">
+          <select name="agent_id" defaultValue={searchParams?.agent_id ?? ""} className="glass-pill rounded-xl border border-white/60 px-3 py-2 text-sm">
             <option value="">Any agent</option>
             {agents.map((a) => (
               <option key={a.id} value={a.id}>
@@ -77,7 +78,7 @@ export default async function DashboardPage({
               </option>
             ))}
           </select>
-          <button type="submit" className="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700">
+          <button type="submit" className="glass-pill rounded-xl bg-brand-600/90 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-600">
             Apply
           </button>
         </form>
@@ -85,11 +86,11 @@ export default async function DashboardPage({
 
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <Kpi label="Total" value={metrics.summary.total} />
-        <Kpi label="Answered" value={metrics.summary.answered} accent="text-emerald-600" />
-        <Kpi label="Missed" value={metrics.summary.missed} accent="text-amber-600" />
-        <Kpi label="Abandoned" value={metrics.summary.abandoned} accent="text-rose-600" />
-        <Kpi label="Voicemail" value={metrics.summary.voicemail} />
-        <Kpi label="Avg answer" value={formatSeconds(metrics.summary.avg_answer_sec)} />
+        <Kpi label="Answered" value={metrics.summary.answered} accent="text-emerald-600" icon={<PhoneCall className="h-4 w-4" />} />
+        <Kpi label="Missed" value={metrics.summary.missed} accent="text-amber-600" icon={<PhoneMissed className="h-4 w-4" />} />
+        <Kpi label="Abandoned" value={metrics.summary.abandoned} accent="text-rose-600" icon={<AlertTriangle className="h-4 w-4" />} />
+        <Kpi label="Voicemail" value={metrics.summary.voicemail} icon={<Voicemail className="h-4 w-4" />} />
+        <Kpi label="Avg answer" value={formatSeconds(metrics.summary.avg_answer_sec)} icon={<Clock4 className="h-4 w-4" />} />
       </div>
 
       <Card title="Trends" subtitle="Answered vs missed vs voicemail">
@@ -137,10 +138,13 @@ export default async function DashboardPage({
   );
 }
 
-function Kpi({ label, value, accent }: { label: string; value: number | string; accent?: string }) {
+function Kpi({ label, value, accent, icon }: { label: string; value: number | string; accent?: string; icon?: React.ReactNode }) {
   return (
-    <Card>
-      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{label}</p>
+    <Card className="glass-pill">
+      <div className="flex items-center justify-between">
+        <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{label}</p>
+        {icon ? <span className="text-slate-600">{icon}</span> : null}
+      </div>
       <p className={`text-3xl font-bold ${accent ?? "text-slate-900"}`}>{value}</p>
     </Card>
   );
