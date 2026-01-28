@@ -4,19 +4,15 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import clsx from "clsx";
-import {
-  LayoutDashboard,
-  Users,
-  Phone,
-  PhoneCall,
-  LogOut
-} from "lucide-react";
+import { LayoutDashboard, Users, Phone, PhoneCall, LogOut, Settings } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/call-logs", label: "Activity", icon: PhoneCall },
+  { href: "/tracked-numbers", label: "Numbers", icon: Phone },
   { href: "/agents", label: "Agents", icon: Users },
-  { href: "/tracked-numbers", label: "Tracked Numbers", icon: Phone },
-  { href: "/call-logs", label: "Call Logs", icon: PhoneCall }
+  { href: "/reports", label: "Reports", icon: LayoutDashboard },
+  { href: "/settings", label: "Settings", icon: Settings }
 ];
 
 export function Nav() {
@@ -30,12 +26,12 @@ export function Nav() {
   }
 
   return (
-    <aside className="hidden min-h-screen w-64 flex-col border-r border-slate-200 bg-white/85 backdrop-blur-xl shadow-sm md:flex">
+    <aside className="group/nav hidden min-h-screen w-[72px] flex-col border-r border-slate-200 bg-white/90 backdrop-blur-xl shadow-sm transition-[width] duration-200 hover:w-[240px] md:flex">
       <div className="flex items-center gap-3 px-4 py-5">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-sm font-bold text-white shadow-md shadow-slate-900/15">
           CF
         </div>
-        <div>
+        <div className="opacity-0 transition-opacity duration-150 group-hover/nav:opacity-100">
           <div className="text-sm font-semibold text-slate-900">Callflow</div>
           <div className="text-xs text-slate-500">Admin</div>
         </div>
@@ -49,14 +45,16 @@ export function Nav() {
               key={link.href}
               href={link.href}
               className={clsx(
-                "group flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 active
                   ? "bg-brand-50 text-brand-700 ring-1 ring-brand-100"
                   : "text-slate-700 hover:bg-slate-100"
               )}
             >
-              <Icon className="h-4 w-4 text-slate-500 group-hover:text-slate-700" />
-              {link.label}
+              <Icon className="h-5 w-5 text-slate-500 group-hover:text-slate-700" />
+              <span className="truncate opacity-0 transition-opacity duration-150 group-hover/nav:opacity-100">
+                {link.label}
+              </span>
             </Link>
           );
         })}
@@ -64,10 +62,10 @@ export function Nav() {
       <div className="px-3 pb-5 pt-2">
         <button
           onClick={handleSignOut}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
         >
-          <LogOut className="h-4 w-4" />
-          Sign out
+          <LogOut className="h-5 w-5" />
+          <span className="opacity-0 transition-opacity duration-150 group-hover/nav:opacity-100">Sign out</span>
         </button>
       </div>
     </aside>
