@@ -45,14 +45,15 @@ export function Nav() {
               key={link.href}
               href={link.href}
               className={clsx(
-                "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 active
                   ? "bg-brand-50 text-brand-700 ring-1 ring-brand-100"
                   : "text-slate-700 hover:bg-slate-100"
               )}
+              title={link.label}
             >
-              <Icon className="h-5 w-5 text-slate-500 group-hover:text-slate-700" />
-              <span className="truncate opacity-0 transition-opacity duration-150 group-hover/nav:opacity-100">
+              <Icon className="h-5 w-5 flex-shrink-0 text-slate-600 group-hover:text-slate-800" />
+              <span className="truncate opacity-0 transition-[opacity,margin] duration-150 group-hover/nav:opacity-100">
                 {link.label}
               </span>
             </Link>
