@@ -84,24 +84,30 @@ export function CallLogsTable({
           </div>
           <div className="text-xs text-slate-500">Max {chart.max} / day</div>
         </div>
-        <svg viewBox="0 0 320 120" role="img" aria-label="Calls in last 7 days" className="w-full">
-          <polyline
-            fill="none"
-            stroke="#2563eb"
-            strokeWidth="2.5"
-            points={chart.points}
-            vectorEffect="non-scaling-stroke"
-          />
-          {chart.circles.map((c, i) => (
-            <circle key={i} cx={c.x} cy={c.y} r={3} fill="#2563eb" />
-          ))}
-          <line x1="0" x2="320" y1="110" y2="110" stroke="#e5e7eb" strokeWidth="1" />
-          {chart.labels.map((l, i) => (
-            <text key={i} x={l.x} y={118} textAnchor="middle" fontSize="10" fill="#94a3b8">
-              {l.label}
-            </text>
-          ))}
-        </svg>
+        <div className="w-full overflow-hidden">
+          <svg viewBox="0 0 700 220" role="img" aria-label="Calls in last 7 days" className="w-full">
+            {/* baseline */}
+            <line x1="40" x2="660" y1="180" y2="180" stroke="#e5e7eb" strokeWidth="1" />
+            {/* polyline */}
+            <polyline
+              fill="none"
+              stroke="#2563eb"
+              strokeWidth="3"
+              points={chart.points}
+              vectorEffect="non-scaling-stroke"
+            />
+            {chart.circles.map((c, i) => (
+              <g key={i}>
+                <circle cx={c.x} cy={c.y} r={5} fill="#2563eb" />
+              </g>
+            ))}
+            {chart.labels.map((l, i) => (
+              <text key={i} x={l.x} y={198} textAnchor="middle" fontSize="12" fill="#94a3b8">
+                {l.label}
+              </text>
+            ))}
+          </svg>
+        </div>
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -200,15 +206,21 @@ function buildChartPoints(calls: CallRow[]) {
     return calls.filter((c) => c.started_at.slice(0, 10) === dateStr).length;
   });
   const max = Math.max(1, ...counts);
-  const points = counts
-    .map((c, i) => {
-      const x = (i / 6) * 320;
-      const y = 110 - (c / max) * 80;
-      return `${x},${y}`;
-    })
-    .join(" ");
-  const circles = counts.map((c, i) => ({ x: (i / 6) * 320, y: 110 - (c / max) * 80 }));
-  const labels = days.map((d, i) => ({ x: (i / 6) * 320, label: format(d, "MMM d") }));
+  const xMin = 40;
+  const xMax = 660;
+  const yBase = 180;
+  const yMaxLift = 120; // vertical drawing height
+  const pointsArr = counts.map((c, i) => {
+    const x = xMin + ((xMax - xMin) * i) / 6;
+    const y = yBase - (c / max) * yMaxLift;
+    return { x, y };
+  });
+  const points = pointsArr.map((p) => `${p.x},${p.y}`).join(" ");
+  const circles = pointsArr;
+  const labels = days.map((d, i) => ({
+    x: xMin + ((xMax - xMin) * i) / 6,
+    label: format(d, "MMM d")
+  }));
   const total = counts.reduce((a, b) => a + b, 0);
   return { points, circles, labels, max: Math.max(...counts), total };
 }
