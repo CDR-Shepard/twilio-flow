@@ -4,7 +4,7 @@ import { loadMetrics } from "../../../lib/metrics";
 import { TrendChart } from "../../../components/trend-chart";
 import { NumberBarChart } from "../../../components/number-bar-chart";
 import { HourHeatmap } from "../../../components/hour-heatmap";
-import { PhoneCall, Voicemail, PhoneMissed, Clock4, AlertTriangle, Percent } from "lucide-react";
+import { PhoneCall, Voicemail, PhoneMissed, Clock4, AlertTriangle } from "lucide-react";
 
 function formatSeconds(value: number | null) {
   if (value == null) return "—";
