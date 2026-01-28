@@ -1,7 +1,7 @@
 import { requireAdminSession } from "../../../lib/auth";
 import { Card } from "../../../components/ui/card";
 import { loadMetrics } from "../../../lib/metrics";
-import { format, parseISO } from "date-fns";
+import { TrendChart } from "../../../components/trend-chart";
 
 function formatSeconds(value: number | null) {
   if (value == null) return "—";
@@ -19,7 +19,6 @@ export default async function DashboardPage() {
 
   const metrics = await loadMetrics(supabase, { from: from.toISOString(), to: to.toISOString() });
 
-  const trendPoints = buildTrendPoints(metrics.trends);
   const topAgents = metrics.agents.sort((a, b) => b.answered - a.answered).slice(0, 5);
   const topNumbers = metrics.numbers.sort((a, b) => b.answered - a.answered).slice(0, 5);
 
@@ -43,33 +42,10 @@ export default async function DashboardPage() {
       </div>
 
       <Card title="Trends" subtitle="Answered vs missed, last 7 days">
-        <div className="w-full overflow-hidden">
-          <svg viewBox="0 0 720 260" className="w-full">
-            <line x1="50" x2="690" y1="210" y2="210" stroke="#e5e7eb" strokeWidth="1" />
-            <polyline
-              fill="none"
-              stroke="#2563eb"
-              strokeWidth="3"
-              points={trendPoints.answered}
-              vectorEffect="non-scaling-stroke"
-            />
-            <polyline
-              fill="none"
-              stroke="#f97316"
-              strokeWidth="3"
-              points={trendPoints.missed}
-              vectorEffect="non-scaling-stroke"
-            />
-            {trendPoints.labels.map((l, i) => (
-              <text key={i} x={l.x} y={228} textAnchor="middle" fontSize="12" fill="#94a3b8">
-                {l.label}
-              </text>
-            ))}
-          </svg>
-          <div className="flex gap-4 text-xs text-slate-500 px-2">
-            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-600" />Answered</span>
-            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-orange-500" />Missed</span>
-          </div>
+        <TrendChart trends={metrics.trends} />
+        <div className="flex gap-4 text-xs text-slate-500 px-2">
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-600" />Answered</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-orange-500" />Missed</span>
         </div>
       </Card>
 
@@ -134,31 +110,6 @@ export default async function DashboardPage() {
       </div>
     </div>
   );
-}
-
-function buildTrendPoints(trends: { date: string; answered: number; missed: number }[]) {
-  if (!trends.length) return { answered: "", missed: "", labels: [] as { x: number; label: string }[] };
-  const dates = trends.map((t) => t.date).sort();
-  const valuesAnswered = trends.map((t) => t.answered);
-  const valuesMissed = trends.map((t) => t.missed);
-  const max = Math.max(1, ...valuesAnswered, ...valuesMissed);
-  const xMin = 50;
-  const xMax = 690;
-  const yBase = 200;
-  const yMaxLift = 130;
-  const labels = dates.map((d, i) => ({
-    x: xMin + ((xMax - xMin) * i) / Math.max(dates.length - 1, 1),
-    label: format(parseISO(d), "MMM d")
-  }));
-  const pointsFor = (vals: number[]) =>
-    vals
-      .map((v, i) => {
-        const x = labels[i].x;
-        const y = yBase - (v / max) * yMaxLift;
-        return `${x},${y}`;
-      })
-      .join(" ");
-  return { answered: pointsFor(valuesAnswered), missed: pointsFor(valuesMissed), labels };
 }
 
 function Kpi({ label, value, accent }: { label: string; value: number | string; accent?: string }) {
