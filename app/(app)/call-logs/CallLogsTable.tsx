@@ -1,0 +1,214 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { format } from "date-fns";
+
+const statusStyle: Record<string, string> = {
+  initiated: "bg-slate-100 text-slate-700",
+  ringing: "bg-amber-100 text-amber-800",
+  connected: "bg-emerald-100 text-emerald-800",
+  completed: "bg-emerald-100 text-emerald-800",
+  failed: "bg-rose-100 text-rose-800"
+};
+
+type CallRow = {
+  id: string;
+  from_number: string | null;
+  to_number: string | null;
+  status: string;
+  started_at: string;
+  ended_at: string | null;
+  agents?: { full_name?: string | null } | null;
+  tracked_numbers?: { friendly_name?: string | null } | null;
+  voicemail_url?: string | null;
+  recording_url?: string | null;
+  recording_sid?: string | null;
+  recording_duration_seconds?: number | null;
+};
+
+export function CallLogsTable({
+  initialCalls,
+  searchParams
+}: {
+  initialCalls: CallRow[];
+  searchParams: { tracked_number_id?: string; status?: string };
+}) {
+  const queryString = useMemo(() => {
+    const query = new URLSearchParams();
+    if (searchParams.tracked_number_id) query.set("tracked_number_id", searchParams.tracked_number_id);
+    if (searchParams.status) query.set("status", searchParams.status);
+    query.set("limit", "100");
+    return query.toString();
+  }, [searchParams.status, searchParams.tracked_number_id]);
+
+  const [calls, setCalls] = useState<CallRow[]>(initialCalls);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
+  useEffect(() => {
+    const fetchLatest = async () => {
+      try {
+        const res = await fetch(`/api/call-logs?${queryString}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        if (Array.isArray(json.calls)) {
+          setCalls(json.calls);
+          setLastUpdated(new Date());
+        }
+      } catch (e) {
+        // ignore transient errors
+      }
+    };
+
+    fetchLatest();
+    const id = setInterval(fetchLatest, 10000);
+    return () => clearInterval(id);
+  }, [queryString]);
+
+  const chart = useMemo(() => buildChartPoints(calls), [calls]);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Activity</h1>
+          <p className="text-sm text-slate-600">Live-ish feed; auto-refreshes every 10s.</p>
+        </div>
+        <div className="text-xs text-slate-500">Updated {format(lastUpdated, "PPpp")}</div>
+      </div>
+
+      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between pb-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Last 7 days</p>
+            <p className="text-lg font-semibold text-slate-900">{chart.total} calls</p>
+          </div>
+          <div className="text-xs text-slate-500">Max {chart.max} / day</div>
+        </div>
+        <svg viewBox="0 0 320 120" role="img" aria-label="Calls in last 7 days" className="w-full">
+          <polyline
+            fill="none"
+            stroke="#2563eb"
+            strokeWidth="2.5"
+            points={chart.points}
+            vectorEffect="non-scaling-stroke"
+          />
+          {chart.circles.map((c, i) => (
+            <circle key={i} cx={c.x} cy={c.y} r={3} fill="#2563eb" />
+          ))}
+          <line x1="0" x2="320" y1="110" y2="110" stroke="#e5e7eb" strokeWidth="1" />
+          {chart.labels.map((l, i) => (
+            <text key={i} x={l.x} y={118} textAnchor="middle" fontSize="10" fill="#94a3b8">
+              {l.label}
+            </text>
+          ))}
+        </svg>
+      </div>
+
+      <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead className="text-left text-xs uppercase text-slate-500">
+              <tr>
+                <th className="px-3 py-2">Started</th>
+                <th className="px-3 py-2">Caller</th>
+                <th className="px-3 py-2">Tracked number</th>
+                <th className="px-3 py-2">Status</th>
+                <th className="px-3 py-2">Answered by</th>
+                <th className="px-3 py-2">Duration</th>
+                <th className="px-3 py-2">Recording</th>
+                <th className="px-3 py-2">Voicemail</th>
+              </tr>
+            </thead>
+            <tbody>
+              {calls?.map((call) => (
+                <tr key={call.id} className="border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                  <td className="px-3 py-2 whitespace-nowrap">{format(new Date(call.started_at), "PP p")}</td>
+                  <td className="px-3 py-2 font-mono text-xs">{call.from_number ?? "Unknown"}</td>
+                  <td className="px-3 py-2">{call.tracked_numbers?.friendly_name ?? call.to_number ?? "—"}</td>
+                  <td className="px-3 py-2">
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium capitalize ${
+                        statusStyle[call.status] ?? "bg-slate-100 text-slate-700"
+                      }`}
+                    >
+                      {call.status}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2">{call.agents?.full_name ?? "—"}</td>
+                  <td className="px-3 py-2">
+                    {call.ended_at
+                      ? Math.round(
+                          (new Date(call.ended_at).getTime() - new Date(call.started_at).getTime()) / 1000
+                        ) + "s"
+                      : "—"}
+                  </td>
+                  <td className="px-3 py-2">
+                    {call.recording_url ? (
+                      <div className="space-y-1">
+                        <audio
+                          className="max-w-[220px]"
+                          controls
+                          preload="none"
+                          src={
+                            call.recording_sid
+                              ? `/api/recordings/${call.recording_sid}`
+                              : `${call.recording_url}.mp3`
+                          }
+                        />
+                        {call.recording_duration_seconds ? (
+                          <p className="text-xs text-slate-500">
+                            {Math.round(call.recording_duration_seconds)}s
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td className="px-3 py-2">
+                    {call.voicemail_url ? (
+                      <audio className="max-w-[220px]" controls preload="none" src={`${call.voicemail_url}.mp3`} />
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {(!calls || calls.length === 0) && (
+                <tr>
+                  <td colSpan={8} className="px-3 py-6 text-center text-slate-500">
+                    No calls yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function buildChartPoints(calls: CallRow[]) {
+  const days = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return d;
+  });
+  const counts = days.map((d) => {
+    const dateStr = d.toISOString().slice(0, 10);
+    return calls.filter((c) => c.started_at.slice(0, 10) === dateStr).length;
+  });
+  const max = Math.max(1, ...counts);
+  const points = counts
+    .map((c, i) => {
+      const x = (i / 6) * 320;
+      const y = 110 - (c / max) * 80;
+      return `${x},${y}`;
+    })
+    .join(" ");
+  const circles = counts.map((c, i) => ({ x: (i / 6) * 320, y: 110 - (c / max) * 80 }));
+  const labels = days.map((d, i) => ({ x: (i / 6) * 320, label: format(d, "MMM d") }));
+  const total = counts.reduce((a, b) => a + b, 0);
+  return { points, circles, labels, max: Math.max(...counts), total };
+}
