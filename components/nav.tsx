@@ -26,17 +26,8 @@ export function Nav() {
   }
 
   return (
-    <aside className="group/nav hidden min-h-screen w-[76px] flex-col border-r border-white/40 bg-white/40 backdrop-blur-3xl shadow-lg shadow-slate-900/10 transition-[width] duration-200 hover:w-[260px] md:flex">
-      <div className="flex items-center gap-3 px-4 py-5">
-        <div className="glass-strong flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-bold text-slate-900">
-          CF
-        </div>
-        <div className="opacity-0 transition-opacity duration-150 group-hover/nav:opacity-100">
-          <div className="text-sm font-semibold text-slate-900">Callflow</div>
-          <div className="text-xs text-slate-500">Admin</div>
-        </div>
-      </div>
-      <nav className="flex-1 space-y-2 px-3">
+    <aside className="group/nav hidden min-h-screen w-[64px] flex-col transition-[width] duration-200 hover:w-[240px] md:flex">
+      <nav className="flex-1 space-y-2 px-2 pt-4">
         {links.map((link) => {
           const active = pathname?.startsWith(link.href);
           const Icon = link.icon;
@@ -60,7 +51,7 @@ export function Nav() {
           );
         })}
       </nav>
-      <div className="px-3 pb-5 pt-2">
+      <div className="px-2 pb-5 pt-2">
         <button
           onClick={handleSignOut}
           className="glass-pill flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold text-slate-700 transition hover:ring-1 hover:ring-white/60"
