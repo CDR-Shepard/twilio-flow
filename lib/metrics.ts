@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { differenceInSeconds, parseISO } from "date-fns";
 import type { Database } from "./types/supabase";
 

@@ -1,91 +1,47 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis, Brush } from "recharts";
 import { format, parseISO } from "date-fns";
 
-type Point = { date: string; answered: number; missed: number };
+type TrendPoint = { date: string; answered: number; missed: number; voicemail: number };
 
-export function TrendChart({ trends }: { trends: Point[] }) {
-  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+type Props = { data: TrendPoint[] };
 
-  const chart = useMemo(() => buildTrendPoints(trends), [trends]);
-  const active = hoverIndex != null ? chart.points[hoverIndex] : null;
+export function TrendChart({ data }: Props) {
+  const formatted = data.map((d) => ({
+    ...d,
+    label: format(parseISO(d.date), "MMM d")
+  }));
 
   return (
-    <div className="relative w-full overflow-hidden">
-      <svg viewBox="0 0 720 260" className="w-full">
-        <line x1="50" x2="690" y1="210" y2="210" stroke="#e5e7eb" strokeWidth="1" />
-        <polyline fill="none" stroke="#2563eb" strokeWidth="3" points={chart.answered} vectorEffect="non-scaling-stroke" />
-        <polyline fill="none" stroke="#f97316" strokeWidth="3" points={chart.missed} vectorEffect="non-scaling-stroke" />
-        {chart.points.map((p, idx) => (
-          <g key={idx}>
-            <circle cx={p.x} cy={p.yAnswered} r={4} fill="#2563eb" />
-            <circle cx={p.x} cy={p.yMissed} r={4} fill="#f97316" />
-            <rect
-              x={p.x - chart.step / 2}
-              y={0}
-              width={chart.step}
-              height={260}
-              fill="transparent"
-              onMouseEnter={() => setHoverIndex(idx)}
-              onMouseLeave={() => setHoverIndex(null)}
-            />
-          </g>
-        ))}
-        {chart.labels.map((l, i) => (
-          <text key={i} x={l.x} y={228} textAnchor="middle" fontSize="12" fill="#94a3b8">
-            {l.label}
-          </text>
-        ))}
-      </svg>
-      {active ? (
-        <div
-          className="pointer-events-none absolute rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs shadow-lg"
-          style={{
-            left: Math.min(Math.max(active.x - 50, 8), 640),
-            top: 24
-          }}
-        >
-          <div className="font-semibold text-slate-900">{format(parseISO(active.date), "EEE, MMM d")}</div>
-          <div className="mt-1 space-y-1 text-slate-700">
-            <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-blue-600" />Answered: {active.answered}</div>
-            <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-orange-500" />Missed: {active.missed}</div>
-          </div>
-        </div>
-      ) : null}
+    <div className="h-72 w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={formatted} margin={{ top: 16, right: 24, left: 0, bottom: 32 }}>
+          <defs>
+            <linearGradient id="answered" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#2563eb" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="#2563eb" stopOpacity={0.05} />
+            </linearGradient>
+            <linearGradient id="missed" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#f97316" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="#f97316" stopOpacity={0.05} />
+            </linearGradient>
+            <linearGradient id="voicemail" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#6366f1" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="#6366f1" stopOpacity={0.05} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+          <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#64748b" }} interval="preserveStartEnd" />
+          <YAxis tick={{ fontSize: 12, fill: "#64748b" }} width={50} allowDecimals={false} />
+          <Tooltip contentStyle={{ borderRadius: 8, borderColor: "#e2e8f0" }} />
+          <Legend verticalAlign="top" height={24} />
+          <Area type="monotone" dataKey="answered" name="Answered" stroke="#2563eb" fill="url(#answered)" strokeWidth={2} />
+          <Area type="monotone" dataKey="missed" name="Missed" stroke="#f97316" fill="url(#missed)" strokeWidth={2} />
+          <Area type="monotone" dataKey="voicemail" name="Voicemail" stroke="#6366f1" fill="url(#voicemail)" strokeWidth={2} />
+          <Brush dataKey="label" height={24} stroke="#94a3b8" travellerWidth={10} />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   );
-}
-
-type TrendChartData = {
-  answered: string;
-  missed: string;
-  labels: { x: number; label: string }[];
-  points: { x: number; yAnswered: number; yMissed: number; answered: number; missed: number; date: string }[];
-  step: number;
-};
-
-function buildTrendPoints(trends: Point[]): TrendChartData {
-  if (!trends.length)
-    return { answered: "", missed: "", labels: [], points: [], step: 90 };
-  const dates = trends.map((t) => t.date).sort();
-  const step = 640 / Math.max(dates.length - 1, 1);
-  const xMin = 50;
-  const yBase = 200;
-  const yMaxLift = 130;
-  const max = Math.max(1, ...trends.map((t) => t.answered), ...trends.map((t) => t.missed));
-  const labels = dates.map((d, i) => ({
-    x: xMin + step * i,
-    label: format(parseISO(d), "MMM d")
-  }));
-  const pointsData = dates.map((d, i) => {
-    const t = trends.find((x) => x.date === d)!;
-    const x = xMin + step * i;
-    const yAnswered = yBase - (t.answered / max) * yMaxLift;
-    const yMissed = yBase - (t.missed / max) * yMaxLift;
-    return { x, yAnswered, yMissed, answered: t.answered, missed: t.missed, date: t.date };
-  });
-  const answered = pointsData.map((p) => `${p.x},${p.yAnswered}`).join(" ");
-  const missed = pointsData.map((p) => `${p.x},${p.yMissed}`).join(" ");
-  return { answered, missed, labels, points: pointsData, step };
 }

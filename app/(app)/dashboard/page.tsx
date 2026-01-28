@@ -11,16 +11,28 @@ function formatSeconds(value: number | null) {
   return `${mins}m ${secs}s`;
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams
+}: {
+  searchParams?: { from?: string; to?: string; tracked_number_id?: string; agent_id?: string };
+}) {
   const { supabase } = await requireAdminSession();
-  const to = new Date();
-  const from = new Date();
-  from.setDate(to.getDate() - 6);
+  const to = searchParams?.to ? new Date(searchParams.to) : new Date();
+  const from = searchParams?.from ? new Date(searchParams.from) : new Date(to.getTime() - 6 * 24 * 60 * 60 * 1000);
 
-  const metrics = await loadMetrics(supabase, { from: from.toISOString(), to: to.toISOString() });
+  const metrics = await loadMetrics(supabase, { from: from.toISOString(), to: to.toISOString(), tracked_number_id: searchParams?.tracked_number_id, agent_id: searchParams?.agent_id });
 
+  type TrackedNumber = import("../../../lib/types/supabase").Database["public"]["Tables"]["tracked_numbers"]["Row"];
+  type Agent = import("../../../lib/types/supabase").Database["public"]["Tables"]["agents"]["Row"];
+  const [{ data: numbersData }, { data: agentsData }] = await Promise.all([
+    supabase.from("tracked_numbers").select("id, friendly_name"),
+    supabase.from("agents").select("id, full_name").eq("active", true)
+  ]);
+  const numbers: Pick<TrackedNumber, "id" | "friendly_name">[] = numbersData ?? [];
+  const agents: Pick<Agent, "id" | "full_name">[] = agentsData ?? [];
   const topAgents = metrics.agents.sort((a, b) => b.answered - a.answered).slice(0, 5);
   const topNumbers = metrics.numbers.sort((a, b) => b.answered - a.answered).slice(0, 5);
+  const presetLinks = buildPresets(searchParams);
 
   return (
     <div className="space-y-7">
@@ -28,9 +40,46 @@ export default async function DashboardPage() {
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Overview</p>
         <h1 className="text-3xl font-bold text-slate-900">Sales Call Performance</h1>
         <p className="text-sm text-slate-600">
-          Who answered, what was missed, and how fast. Last 7 days (auto-calculated).
+          Who answered, what was missed, and how fast. Choose a range to drill in.
         </p>
       </div>
+
+      <Card>
+        <form className="flex flex-wrap items-center gap-2" method="get">
+          <div className="flex gap-2">
+            {presetLinks.map((p) => (
+              <a
+                key={p.label}
+                href={p.href}
+                className="rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                {p.label}
+              </a>
+            ))}
+          </div>
+          <input type="date" name="from" defaultValue={from.toISOString().slice(0, 10)} className="rounded-md border border-slate-200 px-3 py-2 text-sm" />
+          <input type="date" name="to" defaultValue={to.toISOString().slice(0, 10)} className="rounded-md border border-slate-200 px-3 py-2 text-sm" />
+          <select name="tracked_number_id" defaultValue={searchParams?.tracked_number_id ?? ""} className="rounded-md border border-slate-200 px-3 py-2 text-sm">
+            <option value="">All numbers</option>
+            {numbers.map((n) => (
+              <option key={n.id} value={n.id}>
+                {n.friendly_name}
+              </option>
+            ))}
+          </select>
+          <select name="agent_id" defaultValue={searchParams?.agent_id ?? ""} className="rounded-md border border-slate-200 px-3 py-2 text-sm">
+            <option value="">Any agent</option>
+            {agents.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.full_name}
+              </option>
+            ))}
+          </select>
+          <button type="submit" className="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700">
+            Apply
+          </button>
+        </form>
+      </Card>
 
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <Kpi label="Total" value={metrics.summary.total} />
@@ -41,12 +90,8 @@ export default async function DashboardPage() {
         <Kpi label="Avg answer" value={formatSeconds(metrics.summary.avg_answer_sec)} />
       </div>
 
-      <Card title="Trends" subtitle="Answered vs missed, last 7 days">
-        <TrendChart trends={metrics.trends} />
-        <div className="flex gap-4 text-xs text-slate-500 px-2">
-          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-600" />Answered</span>
-          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-orange-500" />Missed</span>
-        </div>
+      <Card title="Trends" subtitle="Answered vs missed vs voicemail, last 7 days">
+        <TrendChart data={metrics.trends} />
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -122,3 +167,20 @@ function Kpi({ label, value, accent }: { label: string; value: number | string; 
 }
 
 export const dynamic = "force-dynamic";
+
+function buildPresets(searchParams?: { tracked_number_id?: string; agent_id?: string }) {
+  const base = new URLSearchParams();
+  if (searchParams?.tracked_number_id) base.set("tracked_number_id", searchParams.tracked_number_id);
+  if (searchParams?.agent_id) base.set("agent_id", searchParams.agent_id);
+
+  const make = (label: string, days: number) => {
+    const to = new Date();
+    const from = new Date(to.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
+    const qs = new URLSearchParams(base);
+    qs.set("from", from.toISOString().slice(0, 10));
+    qs.set("to", to.toISOString().slice(0, 10));
+    return { label, href: `/dashboard?${qs.toString()}` };
+  };
+
+  return [make("Today", 1), make("7 days", 7), make("30 days", 30)];
+}

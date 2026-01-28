@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { format } from "date-fns";
 
 const statusStyle: Record<string, string> = {
@@ -54,6 +55,7 @@ export function CallLogsTable({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selected, setSelected] = useState<CallDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const supabase = useSupabaseClient();
 
   useEffect(() => {
     const fetchLatest = async () => {
@@ -74,6 +76,35 @@ export function CallLogsTable({
     const id = setInterval(fetchLatest, 10000);
     return () => clearInterval(id);
   }, [queryString]);
+
+  // Supabase realtime to reduce perceived lag
+  useEffect(() => {
+    const channel = supabase
+      .channel("calls-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "calls" },
+        () => {
+          // debounce by waiting a tick
+          setTimeout(() => {
+            fetch(`/api/call-logs?${queryString}`)
+              .then((res) => res.json())
+              .then((json) => {
+                if (Array.isArray(json.calls)) {
+                  setCalls(json.calls);
+                  setLastUpdated(new Date());
+                }
+              })
+              .catch(() => {});
+          }, 200);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, queryString]);
 
   const chart = useMemo(() => buildChartPoints(calls), [calls]);
 
