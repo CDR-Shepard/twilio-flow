@@ -2,6 +2,14 @@ import { format } from "date-fns";
 import { requireAdminSession } from "../../../lib/auth";
 import { Card } from "../../../components/ui/card";
 
+const statusStyle: Record<string, string> = {
+  initiated: "bg-slate-100 text-slate-700",
+  ringing: "bg-amber-100 text-amber-800",
+  connected: "bg-emerald-100 text-emerald-800",
+  completed: "bg-emerald-100 text-emerald-800",
+  failed: "bg-rose-100 text-rose-800"
+};
+
 export default async function CallLogsPage({
   searchParams
 }: {
@@ -56,8 +64,15 @@ export default async function CallLogsPage({
     <div className="space-y-6">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">History</p>
-        <h1 className="text-3xl font-bold text-slate-900">Call logs</h1>
-        <p className="text-sm text-slate-600">Search by number or status to find who answered and how long.</p>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Call logs</h1>
+            <p className="text-sm text-slate-600">Track who answered, duration, and listen back instantly.</p>
+          </div>
+          <div className="text-xs text-slate-500">
+            Updated {format(new Date(), "PPpp")}
+          </div>
+        </div>
       </div>
 
       <Card>
@@ -106,13 +121,21 @@ export default async function CallLogsPage({
             </thead>
             <tbody>
               {calls?.map((call) => (
-                <tr key={call.id} className="border-t border-slate-100">
+                <tr key={call.id} className="border-t border-slate-100 hover:bg-slate-50 transition-colors">
                   <td className="px-2 py-2">{format(new Date(call.started_at), "PP p")}</td>
-                  <td className="px-2 py-2">{call.from_number ?? "Unknown"}</td>
+                  <td className="px-2 py-2 font-mono text-sm">{call.from_number ?? "Unknown"}</td>
                   <td className="px-2 py-2">
                     {call.tracked_numbers?.friendly_name ?? call.to_number ?? "—"}
                   </td>
-                  <td className="px-2 py-2 capitalize">{call.status}</td>
+                  <td className="px-2 py-2">
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium capitalize ${
+                        statusStyle[call.status] ?? "bg-slate-100 text-slate-700"
+                      }`}
+                    >
+                      {call.status}
+                    </span>
+                  </td>
                   <td className="px-2 py-2">{call.agents?.full_name ?? "—"}</td>
                   <td className="px-2 py-2">
                     {call.ended_at
@@ -123,23 +146,21 @@ export default async function CallLogsPage({
                   </td>
                   <td className="px-2 py-2">
                     {call.recording_url ? (
-                      <div className="flex items-center gap-1">
-                        <a
-                          className="text-brand-600 hover:text-brand-700"
-                          href={
+                      <div className="space-y-1">
+                        <audio
+                          className="max-w-[240px]"
+                          controls
+                          preload="none"
+                          src={
                             call.recording_sid
                               ? `/api/recordings/${call.recording_sid}`
                               : `${call.recording_url}.mp3`
                           }
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Play
-                        </a>
+                        />
                         {call.recording_duration_seconds ? (
-                          <span className="text-xs text-slate-500">
-                            ({Math.round(call.recording_duration_seconds)}s)
-                          </span>
+                          <p className="text-xs text-slate-500">
+                            {Math.round(call.recording_duration_seconds)}s
+                          </p>
                         ) : null}
                       </div>
                     ) : (
@@ -148,14 +169,7 @@ export default async function CallLogsPage({
                   </td>
                   <td className="px-2 py-2">
                     {call.voicemail_url ? (
-                      <a
-                        className="text-brand-600 hover:text-brand-700"
-                        href={`${call.voicemail_url}.mp3`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Play
-                      </a>
+                      <audio className="max-w-[240px]" controls preload="none" src={`${call.voicemail_url}.mp3`} />
                     ) : (
                       "—"
                     )}
