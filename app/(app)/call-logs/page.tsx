@@ -16,7 +16,7 @@ export default async function CallLogsPage({
   let query = supabase
     .from("calls")
     .select(
-      "id, from_number, to_number, status, started_at, ended_at, connected_agent_id, voicemail_url, recording_url, recording_duration_seconds, agents:connected_agent_id(full_name), tracked_numbers:tracked_number_id(friendly_name)"
+      "id, from_number, to_number, status, started_at, ended_at, connected_agent_id, voicemail_url, recording_url, recording_sid, recording_duration_seconds, agents:connected_agent_id(full_name), tracked_numbers:tracked_number_id(friendly_name)"
     )
     .order("started_at", { ascending: false })
     .limit(50);
@@ -40,6 +40,7 @@ export default async function CallLogsPage({
     tracked_numbers?: { friendly_name?: string | null } | null;
     voicemail_url?: string | null;
     recording_url?: string | null;
+    recording_sid?: string | null;
     recording_duration_seconds?: number | null;
   };
   const calls: CallRow[] =
@@ -47,6 +48,7 @@ export default async function CallLogsPage({
       ...c,
       voicemail_url: c.voicemail_url ?? null,
       recording_url: c.recording_url ?? null,
+      recording_sid: c.recording_sid ?? null,
       recording_duration_seconds: c.recording_duration_seconds ?? null
     })) ?? [];
 
@@ -124,7 +126,11 @@ export default async function CallLogsPage({
                       <div className="flex items-center gap-1">
                         <a
                           className="text-brand-600 hover:text-brand-700"
-                          href={`${call.recording_url}.mp3`}
+                          href={
+                            call.recording_sid
+                              ? `/api/recordings/${call.recording_sid}`
+                              : `${call.recording_url}.mp3`
+                          }
                           target="_blank"
                           rel="noreferrer"
                         >
