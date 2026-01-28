@@ -27,6 +27,7 @@ export type MetricsResult = {
   trends: { date: string; total: number; answered: number; missed: number; voicemail: number }[];
   agents: { id: string; name: string; answered: number; avg_answer_sec: number | null }[];
   numbers: { id: string; label: string; answered: number; missed: number; voicemail: number }[];
+  hours: { hour: number; answered: number; missed: number; voicemail: number }[];
 };
 
 function classify(call: CallRow) {
@@ -78,6 +79,7 @@ export async function loadMetrics(
   const dailyMap = new Map<string, { total: number; answered: number; missed: number; voicemail: number }>();
   const agentMap = new Map<string, { name: string; answered: number; totalAnswerTime: number; answers: number }>();
   const numberMap = new Map<string, { label: string; answered: number; missed: number; voicemail: number }>();
+  const hourMap = Array.from({ length: 24 }).map(() => ({ answered: 0, missed: 0, voicemail: 0 }));
 
   let answeredCount = 0;
   let missedCount = 0;
@@ -118,6 +120,12 @@ export async function loadMetrics(
     numEntry.missed += missed ? 1 : 0;
     numEntry.voicemail += voicemail ? 1 : 0;
     numberMap.set(numberKey, numEntry);
+
+    const hour = parseISO(call.started_at).getHours();
+    const hourEntry = hourMap[hour];
+    hourEntry.answered += answered ? 1 : 0;
+    hourEntry.missed += missed ? 1 : 0;
+    hourEntry.voicemail += voicemail ? 1 : 0;
 
     if (answeringAgentId) {
       const agentEntry = agentMap.get(answeringAgentId) ?? {
@@ -168,6 +176,13 @@ export async function loadMetrics(
     voicemail: v.voicemail
   }));
 
+  const hours: MetricsResult["hours"] = hourMap.map((v, i) => ({
+    hour: i,
+    answered: v.answered,
+    missed: v.missed,
+    voicemail: v.voicemail
+  }));
+
   return {
     summary: {
       total: calls.length,
@@ -180,6 +195,7 @@ export async function loadMetrics(
     },
     trends,
     agents,
-    numbers
+    numbers,
+    hours
   };
 }

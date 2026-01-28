@@ -2,6 +2,8 @@ import { requireAdminSession } from "../../../lib/auth";
 import { Card } from "../../../components/ui/card";
 import { loadMetrics } from "../../../lib/metrics";
 import { TrendChart } from "../../../components/trend-chart";
+import { NumberBarChart } from "../../../components/number-bar-chart";
+import { HourHeatmap } from "../../../components/hour-heatmap";
 
 function formatSeconds(value: number | null) {
   if (value == null) return "—";
@@ -31,7 +33,7 @@ export default async function DashboardPage({
   const numbers: Pick<TrackedNumber, "id" | "friendly_name">[] = numbersData ?? [];
   const agents: Pick<Agent, "id" | "full_name">[] = agentsData ?? [];
   const topAgents = metrics.agents.sort((a, b) => b.answered - a.answered).slice(0, 5);
-  const topNumbers = metrics.numbers.sort((a, b) => b.answered - a.answered).slice(0, 5);
+  const topNumbers = metrics.numbers.sort((a, b) => b.answered - a.answered).slice(0, 8);
   const presetLinks = buildPresets(searchParams);
 
   return (
@@ -90,11 +92,15 @@ export default async function DashboardPage({
         <Kpi label="Avg answer" value={formatSeconds(metrics.summary.avg_answer_sec)} />
       </div>
 
-      <Card title="Trends" subtitle="Answered vs missed vs voicemail, last 7 days">
+      <Card title="Trends" subtitle="Answered vs missed vs voicemail">
         <TrendChart data={metrics.trends} />
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
+        <Card title="Per-number performance" subtitle="Top 8 tracked numbers by answered calls">
+          <NumberBarChart data={topNumbers} />
+        </Card>
+
         <Card title="Agent leaderboard" subtitle="Answered calls and avg answer time">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
@@ -123,34 +129,8 @@ export default async function DashboardPage({
           </div>
         </Card>
 
-        <Card title="Tracked numbers" subtitle="Answered vs missed">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase text-slate-500">
-                <tr>
-                  <th className="px-3 py-2">Number</th>
-                  <th className="px-3 py-2">Answered</th>
-                  <th className="px-3 py-2">Missed</th>
-                  <th className="px-3 py-2">Voicemail</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topNumbers.map((n) => (
-                  <tr key={n.id} className="border-t border-slate-100">
-                    <td className="px-3 py-2">{n.label}</td>
-                    <td className="px-3 py-2">{n.answered}</td>
-                    <td className="px-3 py-2">{n.missed}</td>
-                    <td className="px-3 py-2">{n.voicemail}</td>
-                  </tr>
-                ))}
-                {topNumbers.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="px-3 py-4 text-center text-slate-500">No calls yet.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+        <Card title="Hourly heatmap" subtitle="Answered vs missed vs voicemail by hour">
+          <HourHeatmap data={metrics.hours} />
         </Card>
       </div>
     </div>
