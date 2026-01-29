@@ -164,7 +164,7 @@ export function CallLogsTable({
         </div>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="rounded-2xl border border-white/50 bg-white/60 shadow-lg shadow-slate-900/5 backdrop-blur-2xl">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm text-left text-xs uppercase text-slate-500">
@@ -183,7 +183,7 @@ export function CallLogsTable({
               {calls?.map((call) => (
                 <tr
                   key={call.id}
-                  className="border-t border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer"
+                  className="border-t border-white/50 bg-white/50 backdrop-blur hover:bg-white/80 hover:shadow-md hover:shadow-slate-900/5 transition-all cursor-pointer"
                   onClick={() => openDetail(call.id)}
                 >
                   <td className="px-3 py-2 whitespace-nowrap">{format(new Date(call.started_at), "PP p")}</td>
@@ -220,20 +220,20 @@ export function CallLogsTable({
                           }
                         />
                         {call.recording_duration_seconds ? (
-                          <p className="text-xs text-slate-500">
+                          <span className="glass-pill inline-flex rounded-full px-2 py-1 text-[11px] text-slate-600">
                             {Math.round(call.recording_duration_seconds)}s
-                          </p>
+                          </span>
                         ) : null}
                       </div>
                     ) : (
-                      "—"
+                      <span className="text-slate-400">—</span>
                     )}
                   </td>
                   <td className="px-3 py-2">
                     {call.voicemail_url ? (
                       <audio className="max-w-[220px]" controls preload="none" src={`${call.voicemail_url}.mp3`} />
                     ) : (
-                      "—"
+                      <span className="text-slate-400">—</span>
                     )}
                   </td>
                 </tr>
@@ -252,8 +252,8 @@ export function CallLogsTable({
 
       {selectedId ? (
         <div className="fixed inset-0 z-30 flex items-start justify-end bg-black/30 backdrop-blur-sm">
-          <div className="h-full w-full max-w-xl overflow-y-auto bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+          <div className="glass-strong h-full w-full max-w-xl overflow-y-auto rounded-l-2xl">
+            <div className="flex items-center justify-between border-b border-white/60 px-4 py-3">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Call detail</p>
                 <p className="text-sm font-semibold text-slate-900">{selected?.from_number ?? "Unknown caller"}</p>
@@ -263,7 +263,7 @@ export function CallLogsTable({
                   setSelectedId(null);
                   setSelected(null);
                 }}
-                className="rounded-md px-2 py-1 text-sm text-slate-600 hover:bg-slate-100"
+                className="glass-pill rounded-xl px-3 py-1 text-sm font-semibold text-slate-700 hover:ring-1 hover:ring-white/60"
               >
                 Close
               </button>
@@ -279,7 +279,9 @@ export function CallLogsTable({
                     </div>
                     <div>
                       <p className="text-xs text-slate-500">Status</p>
-                      <p className="font-medium capitalize">{selected.status}</p>
+                      <p className="glass-pill inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold capitalize text-slate-800">
+                        {selected.status}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-500">Tracked number</p>
@@ -326,7 +328,7 @@ export function CallLogsTable({
                     <p className="text-xs uppercase tracking-[0.15em] text-slate-500 mb-1">Attempts</p>
                     <div className="space-y-2 text-sm">
                       {(selected.call_attempts ?? []).map((a, idx) => (
-                        <div key={idx} className="rounded-md border border-slate-200 px-3 py-2">
+                        <div key={idx} className="glass rounded-xl border border-white/50 px-3 py-2">
                           <div className="flex justify-between">
                             <span className="font-medium capitalize">{a.status ?? "initiated"}</span>
                             <span className="text-xs text-slate-500">
