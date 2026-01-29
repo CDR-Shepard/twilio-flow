@@ -1,21 +1,15 @@
 import { Nav } from "../../components/nav";
-import { BeamBackground } from "../../components/magic/beam-bg";
 import { requireAdminSession } from "../../lib/auth";
 
 export default async function V2Layout({ children }: { children: React.ReactNode }) {
   await requireAdminSession();
 
   return (
-    <div className="relative min-h-screen bg-slate-50 text-slate-900">
-      <BeamBackground />
-      <div className="relative flex">
-        <Nav />
-        <main className="flex-1">
-          <div className="container-fluid py-10">
-            <div className="grid gap-8 lg:grid-cols-[1fr]">{children}</div>
-          </div>
-        </main>
-      </div>
+    <div className="min-h-screen bg-[#f7f7f9] text-slate-900">
+      <Nav />
+      <main className="mx-auto max-w-screen-2xl px-4 pb-12 pt-6 md:px-8">
+        <div className="grid gap-8">{children}</div>
+      </main>
     </div>
   );
 }
