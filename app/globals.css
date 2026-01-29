@@ -50,6 +50,10 @@ a {
   @apply mx-auto max-w-7xl px-6 md:px-10;
 }
 
+.container-fluid {
+  @apply mx-auto w-full max-w-screen-2xl px-6 md:px-10;
+}
+
 /* Magic UI inspired primitives */
 .bg-grid-pattern {
   background-image:

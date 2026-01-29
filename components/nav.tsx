@@ -8,11 +8,11 @@ import { Dock } from "./magic/dock";
 import { cn } from "../lib/utils";
 
 const links = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, tone: "indigo" as const },
-  { href: "/call-logs", label: "Activity", icon: PhoneCall, tone: "cyan" as const },
+  { href: "/console", label: "Console", icon: LayoutDashboard, tone: "indigo" as const },
+  { href: "/live", label: "Live Feed", icon: PhoneCall, tone: "cyan" as const },
   { href: "/tracked-numbers", label: "Numbers", icon: Phone, tone: "emerald" as const },
   { href: "/agents", label: "Agents", icon: Users, tone: "amber" as const },
-  { href: "/reports", label: "Reports", icon: LayoutDashboard, tone: "rose" as const },
+  { href: "/call-logs", label: "Legacy Logs", icon: LayoutDashboard, tone: "rose" as const },
   { href: "/settings", label: "Settings", icon: Settings, tone: "slate" as const }
 ];
 

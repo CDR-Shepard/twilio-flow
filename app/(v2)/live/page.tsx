@@ -70,8 +70,11 @@ export default function LivePage() {
       />
 
       <div className="surface overflow-hidden">
-        <div className="flex items-center justify-between border-b border-white/60 px-4 py-3 text-sm text-slate-600">
-          <div>Last 120 calls</div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/60 px-4 py-3 text-sm text-slate-600">
+          <div className="flex items-center gap-2">
+            <span className="tag">Timeline</span>
+            <span className="text-slate-700">Last 120 calls</span>
+          </div>
           <div className="text-xs text-slate-500">Auto-refreshing every 8s</div>
         </div>
 

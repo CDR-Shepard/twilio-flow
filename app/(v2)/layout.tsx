@@ -11,7 +11,7 @@ export default async function V2Layout({ children }: { children: React.ReactNode
       <div className="relative flex">
         <Nav />
         <main className="flex-1">
-          <div className="container-wide py-10">
+          <div className="container-fluid py-10">
             <div className="grid gap-8 lg:grid-cols-[1fr]">{children}</div>
           </div>
         </main>
