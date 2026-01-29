@@ -5,7 +5,6 @@ import { NumberBarChart } from "../../../components/number-bar-chart";
 import { HourHeatmap } from "../../../components/hour-heatmap";
 import { PhoneCall, Voicemail, PhoneMissed, Clock4, AlertTriangle, Sparkles, Wand2, Phone } from "lucide-react";
 import { BentoCard, BentoGrid } from "../../../components/magic/bento-grid";
-import { motion } from "framer-motion";
 import { cn } from "../../../lib/utils";
 
 function formatSeconds(value: number | null) {
@@ -207,16 +206,13 @@ export default async function DashboardPage({
 
 function Kpi({ label, value, accent, icon }: { label: string; value: number | string; accent?: string; icon?: React.ReactNode }) {
   return (
-    <motion.div
-      whileHover={{ y: -2 }}
-      className="rounded-2xl border border-white/60 bg-white/80 p-3 shadow-md ring-1 ring-white/60 backdrop-blur-xl"
-    >
+    <div className="rounded-2xl border border-white/60 bg-white/80 p-3 shadow-md ring-1 ring-white/60 backdrop-blur-xl transition-transform duration-150 hover:-translate-y-0.5">
       <div className="flex items-center justify-between">
         <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">{label}</p>
         {icon ? <span className="text-slate-600">{icon}</span> : null}
       </div>
       <p className={cn("text-2xl font-bold text-slate-900", accent)}>{value}</p>
-    </motion.div>
+    </div>
   );
 }
 
