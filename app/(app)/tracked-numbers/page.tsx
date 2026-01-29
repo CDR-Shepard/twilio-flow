@@ -1,7 +1,6 @@
 import Link from "next/link";
 import clsx from "clsx";
 import { requireAdminSession } from "../../../lib/auth";
-import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { createTrackedNumber, deleteTrackedNumber, toggleTrackedNumber } from "./actions";
@@ -18,31 +17,28 @@ export default async function TrackedNumbersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Numbers</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Numbers</p>
         <h1 className="text-3xl font-bold text-slate-900">Tracked numbers</h1>
-        <p className="text-sm text-slate-600">Control which Twilio lines are live and where they route.</p>
+        <p className="text-sm text-slate-600">Control which Twilio lines are live.</p>
       </div>
 
-      <Card title="Add tracked number" subtitle="We’ll normalize to E.164">
-        <form action={createTrackedNumber} className="grid gap-4 sm:grid-cols-3">
-          <div>
-            <label className="text-sm font-medium text-slate-700">Friendly name</label>
-            <Input name="friendly_name" placeholder="Main line" required />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700">Twilio phone (E.164)</label>
-            <Input name="twilio_phone_number" placeholder="+15558675309" required />
-          </div>
-          <div className="flex items-end">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p className="text-sm font-semibold text-slate-900">Add tracked number</p>
+        <p className="text-xs text-slate-500">We normalize to E.164.</p>
+        <form action={createTrackedNumber} className="mt-4 grid gap-4 sm:grid-cols-3">
+          <Input name="friendly_name" placeholder="Main line" required />
+          <Input name="twilio_phone_number" placeholder="+15558675309" required />
+          <div className="flex items-center">
             <Button type="submit" className="w-full sm:w-auto">
               Save
             </Button>
           </div>
         </form>
-      </Card>
+      </div>
 
-      <Card title="Numbers" subtitle="Click any row to edit routing">
-        <div className="overflow-x-auto">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p className="text-sm font-semibold text-slate-900">Numbers</p>
+        <div className="mt-3 overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="text-left text-xs uppercase text-slate-500">
               <tr>
@@ -54,9 +50,9 @@ export default async function TrackedNumbersPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {numbers?.map((num) => (
-                <tr key={num.id} className="hover:bg-slate-50/50">
+                <tr key={num.id}>
                   <td className="px-3 py-3">
-                    <Link href={`/tracked-numbers/${num.id}`} className="font-semibold text-slate-900 hover:text-brand-700">
+                    <Link href={`/tracked-numbers/${num.id}`} className="font-semibold text-slate-900 hover:text-slate-700">
                       {num.friendly_name}
                     </Link>
                   </td>
@@ -65,7 +61,7 @@ export default async function TrackedNumbersPage() {
                     <span
                       className={clsx(
                         "inline-flex rounded-full px-2 py-1 text-xs font-semibold",
-                        num.active ? "bg-accent-50 text-accent-700" : "bg-slate-100 text-slate-600"
+                        num.active ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"
                       )}
                     >
                       {num.active ? "Active" : "Inactive"}
@@ -95,7 +91,7 @@ export default async function TrackedNumbersPage() {
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

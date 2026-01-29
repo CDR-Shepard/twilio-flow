@@ -1,5 +1,4 @@
 import { requireAdminSession } from "../../../lib/auth";
-import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { createAgent, toggleAgent } from "./actions";
@@ -14,35 +13,30 @@ export default async function AgentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">People</p>
-          <h1 className="text-3xl font-bold text-slate-900">Agents</h1>
-          <p className="text-sm text-slate-600">Manage who rings on your tracked numbers.</p>
-        </div>
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">People</p>
+        <h1 className="text-3xl font-bold text-slate-900">Agents</h1>
+        <p className="text-sm text-slate-600">Manage who rings on your tracked numbers.</p>
       </div>
 
-      <Card title="Add agent" subtitle="Validate numbers; we’ll normalize to E.164">
-        <form action={createAgent} className="grid gap-4 sm:grid-cols-3">
-          <div className="sm:col-span-1 space-y-1">
-            <label className="text-sm font-medium text-slate-700">Full name</label>
-            <Input name="full_name" placeholder="Alex Johnson" required />
-          </div>
-          <div className="sm:col-span-1 space-y-1">
-            <label className="text-sm font-medium text-slate-700">Phone number</label>
-            <Input name="phone_number" placeholder="+15551234567" required />
-          </div>
-          <div className="flex items-end sm:col-span-1">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p className="text-sm font-semibold text-slate-900">Add agent</p>
+        <p className="text-xs text-slate-500">Numbers are normalized to E.164.</p>
+        <form action={createAgent} className="mt-4 grid gap-4 sm:grid-cols-3">
+          <Input name="full_name" placeholder="Full name" required />
+          <Input name="phone_number" placeholder="+15551234567" required />
+          <div className="flex items-center">
             <Button type="submit" className="w-full sm:w-auto" variant="primary">
               Save agent
             </Button>
           </div>
         </form>
-      </Card>
+      </div>
 
-      <Card title="Active agents" subtitle="Tap to toggle or remove">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm table-sticky">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p className="text-sm font-semibold text-slate-900">Active agents</p>
+        <div className="mt-3 overflow-x-auto">
+          <table className="min-w-full text-sm">
             <thead className="text-left text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-3 py-2">Name</th>
@@ -53,14 +47,14 @@ export default async function AgentsPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {agents.map((agent) => (
-                <tr key={agent.id} className="hover:bg-slate-50/50">
+                <tr key={agent.id}>
                   <td className="px-3 py-3 font-medium text-slate-900">{agent.full_name}</td>
                   <td className="px-3 py-3 text-slate-600">{agent.phone_number}</td>
                   <td className="px-3 py-3">
                     <span
                       className={clsx(
                         "inline-flex rounded-full px-2 py-1 text-xs font-semibold",
-                        agent.active ? "bg-accent-50 text-accent-700" : "bg-slate-100 text-slate-600"
+                        agent.active ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"
                       )}
                     >
                       {agent.active ? "Active" : "Inactive"}
@@ -86,7 +80,7 @@ export default async function AgentsPage() {
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

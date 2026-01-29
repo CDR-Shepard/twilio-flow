@@ -70,10 +70,10 @@ export default function LivePage() {
       />
 
       <div className="surface overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/60 px-4 py-3 text-sm text-slate-600">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 text-sm text-slate-700">
           <div className="flex items-center gap-2">
-            <span className="tag">Timeline</span>
-            <span className="text-slate-700">Last 120 calls</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Timeline</span>
+            <span className="text-slate-800">Last 120 calls</span>
           </div>
           <div className="text-xs text-slate-500">Auto-refreshing every 8s</div>
         </div>
@@ -92,7 +92,7 @@ export default function LivePage() {
                   {group.calls.map((call) => (
                     <div
                       key={call.id}
-                      className="group rounded-2xl border border-white/60 bg-white/80 p-4 shadow-sm ring-1 ring-white/60 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-900/10"
+                      className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                     >
                       <div className="flex flex-wrap items-center gap-3">
                         <span className="font-mono text-xs text-slate-500">{format(new Date(call.started_at), "PP p")}</span>
