@@ -1,6 +1,9 @@
 import { Nav } from "../../components/nav";
 import { requireAdminSession } from "../../lib/auth";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function V2Layout({ children }: { children: React.ReactNode }) {
   await requireAdminSession();
 

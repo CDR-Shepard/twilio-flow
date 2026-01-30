@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   description: "Internal call routing console"
 };
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { supabaseUrl, supabaseAnonKey } = getSupabaseEnv();
   const supabase = createServerComponentClient<Database>(
