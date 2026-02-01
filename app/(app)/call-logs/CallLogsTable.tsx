@@ -126,13 +126,15 @@ export function CallLogsTable({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Activity</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Activity</p>
           <p className="text-sm text-slate-600">Live-ish feed; auto-refreshes every 10s.</p>
         </div>
-        <div className="text-xs text-slate-500">Updated {format(lastUpdated, "PPpp")}</div>
+        <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+          Updated {format(lastUpdated, "PPpp")}
+        </div>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between pb-3">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Last 7 days</p>
@@ -164,7 +166,7 @@ export function CallLogsTable({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/50 bg-white/60 shadow-lg shadow-slate-900/5 backdrop-blur-2xl">
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm text-left text-xs uppercase text-slate-500">
