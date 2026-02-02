@@ -64,6 +64,7 @@ export type Database = {
           greeting_text?: string | null;
           voicemail_enabled?: boolean | null;
           voicemail_prompt?: string | null;
+          call_flow_id?: string | null;
         };
         Insert: {
           id?: string;
@@ -76,6 +77,7 @@ export type Database = {
           greeting_text?: string | null;
           voicemail_enabled?: boolean | null;
           voicemail_prompt?: string | null;
+          call_flow_id?: string | null;
         };
         Update: {
           id?: string;
@@ -88,6 +90,7 @@ export type Database = {
           greeting_text?: string | null;
           voicemail_enabled?: boolean | null;
           voicemail_prompt?: string | null;
+          call_flow_id?: string | null;
         };
       };
       tracked_number_routes: {
@@ -179,6 +182,7 @@ export type Database = {
           started_at: string;
           ended_at: string | null;
           created_at: string;
+          delay_seconds?: number;
         };
         Insert: {
           id?: string;
@@ -189,6 +193,7 @@ export type Database = {
           started_at?: string;
           ended_at?: string | null;
           created_at?: string;
+          delay_seconds?: number;
         };
         Update: {
           id?: string;
@@ -199,6 +204,65 @@ export type Database = {
           started_at?: string;
           ended_at?: string | null;
           created_at?: string;
+          delay_seconds?: number;
+        };
+      };
+      call_flows: {
+        Row: {
+          id: string;
+          name: string;
+          type: string;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          type?: string;
+          active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          type?: string;
+          active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      call_flow_members: {
+        Row: {
+          id: string;
+          call_flow_id: string;
+          agent_id: string;
+          delay_seconds: number;
+          sort_order: number;
+          weight: number;
+          active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          call_flow_id: string;
+          agent_id: string;
+          delay_seconds?: number;
+          sort_order?: number;
+          weight?: number;
+          active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          call_flow_id?: string;
+          agent_id?: string;
+          delay_seconds?: number;
+          sort_order?: number;
+          weight?: number;
+          active?: boolean;
+          created_at?: string;
         };
       };
     };
@@ -206,6 +270,20 @@ export type Database = {
       is_admin: {
         Args: Record<string, never>;
         Returns: boolean;
+      };
+      agent_answer_share: {
+        Args: {
+          _tracking_number_id: string | null;
+          _since: string;
+          _bucket: string;
+        };
+        Returns: {
+          bucket_start: string;
+          agent_id: string;
+          answered_count: number;
+          total_count: number;
+          pct: number;
+        }[];
       };
     };
   };

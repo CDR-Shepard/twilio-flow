@@ -61,6 +61,7 @@ export async function POST(request: Request) {
   const callId = url.searchParams.get("call_id") || undefined;
   const agentId = url.searchParams.get("agent_id") || undefined;
   const scope = url.searchParams.get("scope") || "leg";
+  const delaySeconds = Number(url.searchParams.get("delay_seconds") || "0");
   const supabaseAdmin = getSupabaseAdmin();
 
   if (scope === "parent" && callId) {
@@ -90,6 +91,7 @@ export async function POST(request: Request) {
         .from("call_attempts")
         .update({
           status: attemptStatus,
+          delay_seconds: delaySeconds,
           ended_at:
             attemptStatus === "completed" || attemptStatus === "failed" || attemptStatus === "canceled"
               ? new Date().toISOString()
@@ -101,7 +103,8 @@ export async function POST(request: Request) {
         call_id: callId,
         agent_id: agentId,
         attempt_call_sid: callSid,
-        status: attemptStatus
+        status: attemptStatus,
+        delay_seconds: delaySeconds
       });
     }
 

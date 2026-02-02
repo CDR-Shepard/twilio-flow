@@ -2,6 +2,7 @@ import { ArrowUpRight, PhoneCall, PhoneOff, Users } from "lucide-react";
 import { NumberBarChart } from "../../../components/number-bar-chart";
 import { HourHeatmap } from "../../../components/hour-heatmap";
 import { TrendChart } from "../../../components/trend-chart";
+import { AgentAnswerShareChart } from "../../../components/agent-answer-share-chart";
 import { cn } from "../../../lib/utils";
 import { loadMetrics } from "../../../lib/metrics";
 import { requireAdminSession } from "../../../lib/auth";
@@ -19,6 +20,8 @@ export default async function ConsolePage() {
   const metrics = await loadMetrics(supabase, {});
   const topAgents = metrics.agents.sort((a, b) => b.answered - a.answered).slice(0, 5);
   const topNumbers = metrics.numbers.sort((a, b) => b.answered - a.answered).slice(0, 5);
+  const { data: tnData } = await supabase.from("tracked_numbers").select("id, friendly_name");
+  const trackingNumbers = (tnData ?? []).map((t) => ({ id: t.id, label: t.friendly_name }));
 
   const answeredPct = metrics.summary.total ? Math.round((metrics.summary.answered / metrics.summary.total) * 100) : 0;
   const missedPct = metrics.summary.total ? Math.round((metrics.summary.missed / metrics.summary.total) * 100) : 0;
@@ -79,6 +82,11 @@ export default async function ConsolePage() {
           <HourHeatmap data={metrics.hours} />
         </Card>
       </div>
+
+      <Card>
+        <CardHeader title="Answer share" description="Who answers calls by campaign and time window" />
+        <AgentAnswerShareChart trackingNumbers={trackingNumbers} />
+      </Card>
 
       <Card>
         <CardHeader

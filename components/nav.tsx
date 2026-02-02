@@ -12,6 +12,7 @@ const navItems = [
   { href: "/live", label: "Live feed", icon: Activity },
   { href: "/call-logs", label: "Logs", icon: PhoneCall },
   { href: "/tracked-numbers", label: "Numbers", icon: Phone },
+  { href: "/call-flows", label: "Call flows", icon: PhoneCall },
   { href: "/agents", label: "Agents", icon: Users },
   { href: "/settings", label: "Settings", icon: Settings }
 ];

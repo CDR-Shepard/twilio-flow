@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireAdminSession } from "../../../../lib/auth";
 import { CallFlowBuilder } from "./builder";
-import { updateCallFlow, updateSettings } from "./actions";
+import { assignCallFlow, updateCallFlow, updateSettings } from "./actions";
 import { Card } from "../../../../components/ui/card";
 import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
@@ -38,6 +38,9 @@ export default async function TrackedNumberDetailPage({ params }: { params: { id
     .order("full_name");
   type AgentRow = import("../../../../lib/types/supabase").Database["public"]["Tables"]["agents"]["Row"];
   const activeAgents: AgentRow[] = activeAgentsData ?? [];
+
+  const { data: flowRows } = await supabase.from("call_flows").select("id, name, type, active").order("name");
+  const callFlows = (flowRows as { id: string; name: string; type: string; active: boolean }[] | null) ?? [];
 
   const selected = (routes ?? [])
     .map((r) => ({
@@ -92,7 +95,45 @@ export default async function TrackedNumberDetailPage({ params }: { params: { id
         </form>
       </Card>
 
-      <CallFlowBuilder initialAvailable={available} initialSelected={selected} onSave={updateCallFlow.bind(null, params.id)} />
+      <Card title="Routing group" subtitle="Assign a call flow or use a custom order">
+        <form
+          className="flex flex-wrap items-center gap-3"
+          action={async (formData) => {
+            "use server";
+            await assignCallFlow(params.id, (formData.get("call_flow_id") as string) || null);
+          }}
+        >
+          <label className="text-sm font-semibold text-slate-800" htmlFor="call_flow_id">
+            Call flow group
+          </label>
+          <select
+            id="call_flow_id"
+            name="call_flow_id"
+            defaultValue={trackedNumber.call_flow_id ?? ""}
+            className="rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800"
+          >
+            <option value="">Custom (per-number order)</option>
+            {callFlows.map((flow) => (
+              <option key={flow.id} value={flow.id} disabled={!flow.active}>
+                {flow.name} {flow.active ? "" : "(inactive)"} [{flow.type}]
+              </option>
+            ))}
+          </select>
+          <Button type="submit" size="sm">
+            Save routing choice
+          </Button>
+        </form>
+        {!trackedNumber.call_flow_id ? (
+          <div className="mt-4">
+            <CallFlowBuilder initialAvailable={available} initialSelected={selected} onSave={updateCallFlow.bind(null, params.id)} />
+          </div>
+        ) : (
+          <p className="mt-4 text-sm text-slate-600">
+            This number uses the <strong>{callFlows.find((f) => f.id === trackedNumber.call_flow_id)?.name ?? "selected"}</strong>{" "}
+            call flow. Edit the flow under “Call Flows”.
+          </p>
+        )}
+      </Card>
     </div>
   );
 }

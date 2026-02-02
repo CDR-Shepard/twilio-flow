@@ -34,3 +34,12 @@ export async function updateSettings(
     .eq("id", trackedNumberId);
   revalidatePath(`/tracked-numbers/${trackedNumberId}`);
 }
+
+export async function assignCallFlow(trackedNumberId: string, callFlowId: string | null) {
+  const supabaseAdmin = getSupabaseAdmin();
+  await supabaseAdmin
+    .from("tracked_numbers")
+    .update({ call_flow_id: callFlowId })
+    .eq("id", trackedNumberId);
+  revalidatePath(`/tracked-numbers/${trackedNumberId}`);
+}
