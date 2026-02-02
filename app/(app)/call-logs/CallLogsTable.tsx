@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { format } from "date-fns";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, type TooltipProps } from "recharts";
 
 const statusStyle: Record<string, string> = {
   initiated: "bg-slate-100 text-slate-700",
@@ -114,6 +115,11 @@ export function CallLogsTable({
     accent: "#8b5cf6" // violet-500 for highlight
   };
 
+  const tooltipFormatter: TooltipProps<number, string>["formatter"] = (value) => {
+    const val = typeof value === "number" ? value : Number(value ?? 0);
+    return [val, "Calls"];
+  };
+
   const openDetail = async (id: string) => {
     setSelectedId(id);
     setLoadingDetail(true);
@@ -149,54 +155,30 @@ export function CallLogsTable({
           <div className="text-xs text-slate-500">Max {chart.max} / day</div>
         </div>
         <div className="w-full overflow-hidden">
-          <svg viewBox="0 0 720 240" role="img" aria-label="Calls in last 7 days" className="w-full">
-            <defs>
-              <linearGradient id="callsFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={chartColors.fillFrom} />
-                <stop offset="100%" stopColor={chartColors.fillTo} />
-              </linearGradient>
-            </defs>
-
-            {chart.yTicks.map((tick) => (
-              <g key={tick.value}>
-                <line x1={chart.xMin} x2={chart.xMax} y1={tick.y} y2={tick.y} stroke="#e2e8f0" strokeWidth="1" strokeDasharray="2 4" />
-                <text x={chart.xMin - 12} y={tick.y + 4} textAnchor="end" fontSize="11" fill="#94a3b8">
-                  {tick.value}
-                </text>
-              </g>
-            ))}
-
-            <path d={chart.areaPath} fill="url(#callsFill)" />
-            <polyline
-              fill="none"
-              stroke={chartColors.line}
-              strokeWidth="3"
-              points={chart.points}
-              vectorEffect="non-scaling-stroke"
-            />
-
-            {chart.circles.map((c, i) => {
-              const isLast = i === chart.circles.length - 1;
-              return (
-                <g key={i}>
-                  <circle cx={c.x} cy={c.y} r={isLast ? 6 : 5} fill={isLast ? chartColors.accent : chartColors.line} />
-                  {isLast ? (
-                    <text x={c.x} y={c.y - 12} textAnchor="middle" fontSize="11" fill="#334155" fontWeight="600">
-                      Today
-                    </text>
-                  ) : null}
-                </g>
-              );
-            })}
-
-            <line x1={chart.xMin} x2={chart.xMax} y1={chart.yBase} y2={chart.yBase} stroke="#e2e8f0" strokeWidth="1.2" />
-
-            {chart.labels.map((l, i) => (
-              <text key={i} x={l.x} y={212} textAnchor="middle" fontSize="12" fill="#94a3b8">
-                {l.label}
-              </text>
-            ))}
-          </svg>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chart.data} margin={{ top: 10, right: 18, left: -10, bottom: 6 }}>
+                <defs>
+                  <linearGradient id="callsFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={chartColors.fillFrom} />
+                    <stop offset="100%" stopColor={chartColors.fillTo} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" strokeOpacity={0.7} />
+                <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#94a3b8" }} />
+                <YAxis tick={{ fontSize: 12, fill: "#94a3b8" }} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{
+                    borderRadius: 10,
+                    borderColor: "#e2e8f0",
+                    boxShadow: "0 10px 30px rgba(15,23,42,0.08)"
+                  }}
+                  formatter={tooltipFormatter}
+                />
+                <Area type="monotone" dataKey="count" stroke={chartColors.line} fill="url(#callsFill)" strokeWidth={2.4} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
@@ -425,5 +407,11 @@ function buildChartPoints(calls: CallRow[]) {
   });
   const areaPath = `M ${xMin} ${yBase} ${pointsArr.map((p) => `L ${p.x} ${p.y}`).join(" ")} L ${xMax} ${yBase} Z`;
 
-  return { points, circles, labels, yTicks, xMin, xMax, yBase, max: maxValue, total, areaPath };
+  const data = days.map((d, i) => ({
+    date: d.toISOString().slice(0, 10),
+    label: format(d, "MMM d"),
+    count: counts[i]
+  }));
+
+  return { points, circles, labels, yTicks, xMin, xMax, yBase, max: maxValue, total, areaPath, data };
 }

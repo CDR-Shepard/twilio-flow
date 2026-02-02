@@ -9,7 +9,8 @@ import {
   type DragEndEvent,
   useDroppable,
   useSensor,
-  useSensors
+  useSensors,
+  closestCenter
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -43,7 +44,7 @@ export function CallFlowBuilder({
   const [saving, startTransition] = useTransition();
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 2 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates
     })
@@ -112,7 +113,7 @@ export function CallFlowBuilder({
     });
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
       <div className="grid gap-6 md:grid-cols-2">
         <Column title="Available agents" hint="Drag into the ringing group">
           <Droppable id="available">

@@ -6,7 +6,9 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent
+  DragEndEvent,
+  closestCenter,
+  DragOverlay
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -38,12 +40,14 @@ export function FlowMembersManager({
 }) {
   const [members, setMembers] = useState<MemberView[]>(initialMembers);
   const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
-  const [saving, startTransition] = useTransition();
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [, startTransition] = useTransition();
   const saveTimer = useRef<NodeJS.Timeout | null>(null);
   const hasMounted = useRef(false);
-  const [showSaving, setShowSaving] = useState(false);
+  const savedTimer = useRef<NodeJS.Timeout | null>(null);
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 2 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
@@ -60,29 +64,26 @@ export function FlowMembersManager({
     }
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      startTransition(() => onSave(members));
+      setStatus("saving");
+      startTransition(async () => {
+        await onSave(members);
+        setStatus("saved");
+        if (savedTimer.current) clearTimeout(savedTimer.current);
+        savedTimer.current = setTimeout(() => setStatus("idle"), 1200);
+      });
     }, 500);
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
+      if (savedTimer.current) clearTimeout(savedTimer.current);
     };
   }, [members, onSave]);
 
-  // Smooth saving indicator to avoid flicker on quick saves
-  useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-    if (saving) {
-      timer = setTimeout(() => setShowSaving(true), 300);
-    } else {
-      setShowSaving(false);
-    }
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [saving]);
-
-  const handleDragStart = () => {};
+  const handleDragStart = (event: { active: { id: string | number } }) => {
+    setActiveId(String(event.active.id));
+  };
 
   function handleDragEnd(event: DragEndEvent) {
+    setActiveId(null);
     const { active, over } = event;
     if (!over) return;
     const ids = members.map((m) => m.agent_id);
@@ -183,10 +184,12 @@ export function FlowMembersManager({
               {flowType === "simultaneous" ? "Simultaneous waves by delay" : "Order defines ring priority"}
             </p>
           </div>
-          <div className="text-xs text-slate-500">{showSaving ? "Saving…" : "Auto-saved"}</div>
+          <div className="text-xs text-slate-500">
+            {status === "saving" ? "Saving…" : status === "saved" ? "Saved" : "Auto-saved"}
+          </div>
         </div>
 
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd} onDragStart={handleDragStart} collisionDetection={closestCenter}>
           <SortableContext items={members.map((m) => m.agent_id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-2">
               {members.map((m, idx) => (
@@ -211,6 +214,24 @@ export function FlowMembersManager({
               )}
             </div>
           </SortableContext>
+          <DragOverlay>
+            {activeId ? (
+              <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-xl ring-2 ring-accent-400">
+                <div className="flex items-center gap-3">
+                  <span className="text-lg text-slate-400 cursor-grab">⇅</span>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">
+                      {members.find((m) => m.agent_id === activeId)?.name ?? "Agent"}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      {members.find((m) => m.agent_id === activeId)?.phone ?? ""}
+                    </div>
+                  </div>
+                </div>
+                <span className="text-xs text-slate-500">Drag to reorder</span>
+              </div>
+            ) : null}
+          </DragOverlay>
         </DndContext>
       </div>
     </div>
