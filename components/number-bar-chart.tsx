@@ -5,6 +5,12 @@ import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAx
 type NumberPoint = { label: string; answered: number; missed: number; voicemail: number };
 
 export function NumberBarChart({ data }: { data: NumberPoint[] }) {
+  const colors = {
+    answered: "#0ea5e9", // cyan-500
+    missed: "#f97316", // orange-500
+    voicemail: "#8b5cf6" // violet-500
+  };
+
   const top = data.slice(0, 8);
   return (
     <div className="h-72 w-full">
@@ -17,10 +23,10 @@ export function NumberBarChart({ data }: { data: NumberPoint[] }) {
             cursor={{ fill: "rgba(15,23,42,0.04)" }}
             contentStyle={{ borderRadius: 10, borderColor: "#e2e8f0", boxShadow: "0 10px 30px rgba(15,23,42,0.08)" }}
           />
-          <Legend verticalAlign="top" height={24} iconType="circle" wrapperStyle={{ fontSize: 12, color: "#475569" }} />
-          <Bar dataKey="answered" name="Answered" stackId="a" fill="#0f172a" radius={[8, 8, 8, 8]} />
-          <Bar dataKey="missed" name="Missed" stackId="a" fill="#9ca3af" radius={[8, 8, 8, 8]} />
-          <Bar dataKey="voicemail" name="Voicemail" stackId="a" fill="#cbd5e1" radius={[8, 8, 8, 8]} />
+          <Legend verticalAlign="top" height={24} iconType="circle" wrapperStyle={{ fontSize: 12, color: "#334155" }} />
+          <Bar dataKey="answered" name="Answered" stackId="a" fill={colors.answered} radius={[8, 8, 8, 8]} />
+          <Bar dataKey="missed" name="Missed" stackId="a" fill={colors.missed} radius={[8, 8, 8, 8]} />
+          <Bar dataKey="voicemail" name="Voicemail" stackId="a" fill={colors.voicemail} radius={[8, 8, 8, 8]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
