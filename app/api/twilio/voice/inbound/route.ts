@@ -165,10 +165,7 @@ export async function POST(request: Request) {
     record: "record-from-answer-dual",
     recordingStatusCallback: `${baseUrl}/api/twilio/voice/recording`,
     recordingStatusCallbackEvent: ["completed"],
-    recordingStatusCallbackMethod: "POST",
-    statusCallback: `${baseUrl}/api/twilio/voice/status?call_id=${callId}&scope=parent`,
-    statusCallbackEvent: ["initiated", "ringing", "answered", "completed"],
-    statusCallbackMethod: "POST"
+    recordingStatusCallbackMethod: "POST"
   });
 
   for (const agent of currentGroup.members) {

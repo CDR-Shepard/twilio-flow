@@ -20,7 +20,10 @@ export default async function ConsolePage() {
   const metrics = await loadMetrics(supabase, {});
   const topAgents = metrics.agents.sort((a, b) => b.answered - a.answered).slice(0, 5);
   const topNumbers = metrics.numbers.sort((a, b) => b.answered - a.answered).slice(0, 5);
-  const { data: tnData } = await supabase.from("tracked_numbers").select("id, friendly_name");
+  const { data: tnData } = await supabase
+    .from("tracked_numbers")
+    .select("id, friendly_name")
+    .returns<{ id: string; friendly_name: string }[]>();
   const trackingNumbers = (tnData ?? []).map((t) => ({ id: t.id, label: t.friendly_name }));
 
   const answeredPct = metrics.summary.total ? Math.round((metrics.summary.answered / metrics.summary.total) * 100) : 0;

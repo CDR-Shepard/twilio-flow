@@ -1,19 +1,32 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis, type TooltipProps } from "recharts";
 import { format, parseISO } from "date-fns";
 import { Button } from "./ui/button";
 import { cn } from "../lib/utils";
 
 type TrackingNumber = { id: string; label: string };
+type AgentShareRow = { bucket_start: string; agent_id: string; answered_count: number; total_count: number; pct: number };
+type AgentShareResponse = {
+  range: string;
+  bucket: "minute" | "hour" | "day";
+  data: AgentShareRow[];
+  agents: Record<string, { full_name: string | null }>;
+};
 
 const palette = ["#0ea5e9", "#8b5cf6", "#f97316", "#22c55e", "#f43f5e", "#14b8a6", "#eab308", "#6366f1"];
 
 export function AgentAnswerShareChart({ trackingNumbers }: { trackingNumbers: TrackingNumber[] }) {
   const [range, setRange] = useState<"1h" | "24h" | "7d" | "30d">("7d");
   const [trackingNumberId, setTrackingNumberId] = useState<string>("all");
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<AgentShareResponse | null>(null);
+
+  const formatTooltip: TooltipProps<number, string>["formatter"] = (value, name) => {
+    const num = typeof value === "number" ? value : Number(value ?? 0);
+    const key = String(name ?? "");
+    return [`${Math.round(num * 100)}%`, data?.agents?.[key]?.full_name ?? key];
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -23,7 +36,7 @@ export function AgentAnswerShareChart({ trackingNumbers }: { trackingNumbers: Tr
       }`;
       const res = await fetch(url);
       if (!res.ok) return;
-      const json = await res.json();
+      const json: AgentShareResponse = await res.json();
       if (!cancelled) setData(json);
     };
     fetchData();
@@ -38,7 +51,6 @@ export function AgentAnswerShareChart({ trackingNumbers }: { trackingNumbers: Tr
     if (!data?.data) return [];
     const buckets: Record<string, Record<string, number>> = {};
     const labels: Record<string, string> = {};
-    const agentsMap: Record<string, string> = data.agents || {};
 
     data.data.forEach((row: { bucket_start: string; agent_id: string; pct: number }) => {
       const key = row.bucket_start;
@@ -108,7 +120,7 @@ export function AgentAnswerShareChart({ trackingNumbers }: { trackingNumbers: Tr
             <YAxis tick={{ fontSize: 12, fill: "#94a3b8" }} tickFormatter={(v) => `${Math.round(v * 100)}%`} />
             <Tooltip
               contentStyle={{ borderRadius: 10, borderColor: "#e2e8f0", boxShadow: "0 10px 30px rgba(15,23,42,0.08)" }}
-              formatter={(value: number, key: string) => [`${Math.round((value ?? 0) * 100)}%`, data?.agents?.[key]?.full_name ?? key]}
+              formatter={formatTooltip}
             />
             <Legend verticalAlign="top" height={26} iconType="circle" wrapperStyle={{ fontSize: 12, color: "#334155" }} />
             {agentIds.map((id, idx) => (
