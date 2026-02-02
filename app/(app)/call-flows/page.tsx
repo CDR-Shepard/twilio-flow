@@ -95,7 +95,7 @@ export default async function CallFlowsPage() {
                       <option value="sequential">Sequential</option>
                     </select>
                   </div>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mt-6">
                     <input type="checkbox" name="active" defaultChecked={flow.active} /> Active
                   </label>
                   <Button type="submit" size="sm" variant="secondary">

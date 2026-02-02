@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { LayoutDashboard, Users, Phone, PhoneCall, LogOut, Settings, Activity, Menu, Voicemail, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Users, Phone, PhoneCall, LogOut, Settings, Activity, Menu, GitBranch, BarChart3 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useState } from "react";
 
@@ -12,7 +12,7 @@ const navItems = [
   { href: "/live", label: "Live feed", icon: Activity },
   { href: "/call-logs", label: "Logs", icon: BarChart3 },
   { href: "/tracked-numbers", label: "Numbers", icon: Phone },
-  { href: "/call-flows", label: "Call flows", icon: Voicemail },
+  { href: "/call-flows", label: "Call flows", icon: GitBranch },
   { href: "/agents", label: "Agents", icon: Users },
   { href: "/settings", label: "Settings", icon: Settings }
 ];
@@ -55,7 +55,7 @@ export function Nav() {
     <>
       {/* Icon rail for desktop */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-16 flex-col items-center border-r border-slate-200 bg-white/95 py-4 lg:flex">
-        <Link href="/console" className="flex h-12 w-12 items-center justify-center rounded-md border border-slate-200 bg-white shadow-sm">
+        <Link href="/console" className="flex h-12 w-12 items-center justify-center rounded-md border border-slate-200 bg-white shadow-sm" title="Overview">
           <PhoneCall className="h-5 w-5 text-slate-900" />
         </Link>
 
