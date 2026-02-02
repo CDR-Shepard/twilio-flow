@@ -10,9 +10,9 @@ export function HourHeatmap({
   const max = useMemo(() => Math.max(1, ...data.map((d) => d.answered + d.missed + d.voicemail)), [data]);
   const rows = ["answered", "missed", "voicemail"] as const;
   const colors: Record<(typeof rows)[number], string> = {
-    answered: "#0f172a",
-    missed: "#9ca3af",
-    voicemail: "#cbd5e1"
+    answered: "#0ea5e9", // cyan-500
+    missed: "#f97316", // orange-500
+    voicemail: "#8b5cf6" // violet-500
   };
 
   return (
@@ -41,7 +41,10 @@ export function HourHeatmap({
                   const total = d.answered + d.missed + d.voicemail;
                   const value = d[row];
                   const intensity = total === 0 ? 0 : value / max;
-                  const bg = value === 0 ? "#f8fafc" : hexWithAlpha(colors[row], Math.max(0.12, intensity * 0.85));
+                  const bg =
+                    value === 0
+                      ? "#f8fafc"
+                      : `linear-gradient(180deg, ${hexWithAlpha(colors[row], Math.max(0.18, intensity))} 0%, ${hexWithAlpha(colors[row], 0.08)} 100%)`;
                   return (
                     <td key={`${row}-${d.hour}`} className="px-2 py-1 text-center">
                       <div

@@ -107,6 +107,12 @@ export function CallLogsTable({
   }, [supabase, queryString]);
 
   const chart = useMemo(() => buildChartPoints(calls), [calls]);
+  const chartColors = {
+    line: "#0ea5e9", // cyan-500
+    fillFrom: "rgba(14, 165, 233, 0.18)",
+    fillTo: "rgba(14, 165, 233, 0.02)",
+    accent: "#8b5cf6" // violet-500 for highlight
+  };
 
   const openDetail = async (id: string) => {
     setSelectedId(id);
@@ -143,22 +149,50 @@ export function CallLogsTable({
           <div className="text-xs text-slate-500">Max {chart.max} / day</div>
         </div>
         <div className="w-full overflow-hidden">
-          <svg viewBox="0 0 700 220" role="img" aria-label="Calls in last 7 days" className="w-full">
-            <line x1="40" x2="660" y1="180" y2="180" stroke="#e5e7eb" strokeWidth="1" />
+          <svg viewBox="0 0 720 240" role="img" aria-label="Calls in last 7 days" className="w-full">
+            <defs>
+              <linearGradient id="callsFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={chartColors.fillFrom} />
+                <stop offset="100%" stopColor={chartColors.fillTo} />
+              </linearGradient>
+            </defs>
+
+            {chart.yTicks.map((tick) => (
+              <g key={tick.value}>
+                <line x1={chart.xMin} x2={chart.xMax} y1={tick.y} y2={tick.y} stroke="#e2e8f0" strokeWidth="1" strokeDasharray="2 4" />
+                <text x={chart.xMin - 12} y={tick.y + 4} textAnchor="end" fontSize="11" fill="#94a3b8">
+                  {tick.value}
+                </text>
+              </g>
+            ))}
+
+            <path d={chart.areaPath} fill="url(#callsFill)" />
             <polyline
               fill="none"
-              stroke="#2563eb"
+              stroke={chartColors.line}
               strokeWidth="3"
               points={chart.points}
               vectorEffect="non-scaling-stroke"
             />
-            {chart.circles.map((c, i) => (
-              <g key={i}>
-                <circle cx={c.x} cy={c.y} r={5} fill="#2563eb" />
-              </g>
-            ))}
+
+            {chart.circles.map((c, i) => {
+              const isLast = i === chart.circles.length - 1;
+              return (
+                <g key={i}>
+                  <circle cx={c.x} cy={c.y} r={isLast ? 6 : 5} fill={isLast ? chartColors.accent : chartColors.line} />
+                  {isLast ? (
+                    <text x={c.x} y={c.y - 12} textAnchor="middle" fontSize="11" fill="#334155" fontWeight="600">
+                      Today
+                    </text>
+                  ) : null}
+                </g>
+              );
+            })}
+
+            <line x1={chart.xMin} x2={chart.xMax} y1={chart.yBase} y2={chart.yBase} stroke="#e2e8f0" strokeWidth="1.2" />
+
             {chart.labels.map((l, i) => (
-              <text key={i} x={l.x} y={198} textAnchor="middle" fontSize="12" fill="#94a3b8">
+              <text key={i} x={l.x} y={212} textAnchor="middle" fontSize="12" fill="#94a3b8">
                 {l.label}
               </text>
             ))}
@@ -365,14 +399,16 @@ function buildChartPoints(calls: CallRow[]) {
     const dateStr = d.toISOString().slice(0, 10);
     return calls.filter((c) => c.started_at.slice(0, 10) === dateStr).length;
   });
-  const max = Math.max(1, ...counts);
-  const xMin = 40;
-  const xMax = 660;
-  const yBase = 180;
+  const maxValue = Math.max(0, ...counts);
+  const step = Math.max(1, Math.ceil(maxValue / 4));
+  const scaleMax = Math.max(1, step * 4);
+  const xMin = 70;
+  const xMax = 680;
+  const yBase = 186;
   const yMaxLift = 120;
   const pointsArr = counts.map((c, i) => {
     const x = xMin + ((xMax - xMin) * i) / 6;
-    const y = yBase - (c / max) * yMaxLift;
+    const y = yBase - (c / scaleMax) * yMaxLift;
     return { x, y };
   });
   const points = pointsArr.map((p) => `${p.x},${p.y}`).join(" ");
@@ -382,5 +418,12 @@ function buildChartPoints(calls: CallRow[]) {
     label: format(d, "MMM d")
   }));
   const total = counts.reduce((a, b) => a + b, 0);
-  return { points, circles, labels, max: Math.max(...counts), total };
+  const yTicks = Array.from({ length: 5 }).map((_, i) => {
+    const value = step * i;
+    const y = yBase - (value / scaleMax) * yMaxLift;
+    return { value, y };
+  });
+  const areaPath = `M ${xMin} ${yBase} ${pointsArr.map((p) => `L ${p.x} ${p.y}`).join(" ")} L ${xMax} ${yBase} Z`;
+
+  return { points, circles, labels, yTicks, xMin, xMax, yBase, max: maxValue, total, areaPath };
 }
