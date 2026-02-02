@@ -25,7 +25,6 @@ export function AgentAnswerShareChart({ trackingNumbers }: { trackingNumbers: Tr
   const formatTooltip: TooltipProps<number, string>["formatter"] = (value, name) => {
     const num = typeof value === "number" ? value : Number(value ?? 0);
     const key = String(name ?? "");
-    // value arrives as normalized ratio (0–1) because stackOffset="expand"
     return [`${Math.round(num * 1000) / 10}%`, data?.agents?.[key]?.full_name ?? key];
   };
 
@@ -53,6 +52,7 @@ export function AgentAnswerShareChart({ trackingNumbers }: { trackingNumbers: Tr
     const buckets: Record<string, Record<string, number>> = {};
     const labels: Record<string, string> = {};
 
+    // Build raw counts
     data.data.forEach((row: { bucket_start: string; agent_id: string; answered_count: number }) => {
       const key = row.bucket_start;
       if (!buckets[key]) buckets[key] = {};
@@ -60,14 +60,21 @@ export function AgentAnswerShareChart({ trackingNumbers }: { trackingNumbers: Tr
       labels[key] = format(parseISO(key), data.bucket === "minute" ? "h:mm a" : data.bucket === "hour" ? "MMM d h a" : "MMM d");
     });
 
+    // Normalize to proportions per bucket so percentages sum to 100
     return Object.entries(buckets)
       .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
-      .map(([bucketStart, values]) => ({
-        bucketStart,
-        label: labels[bucketStart],
-        ...values,
-        total: Object.values(values).reduce((a, b) => a + b, 0)
-      }));
+      .map(([bucketStart, values]) => {
+        const total = Object.values(values).reduce((a, b) => a + b, 0) || 1;
+        const proportions: Record<string, number> = {};
+        Object.entries(values).forEach(([aid, cnt]) => {
+          proportions[aid] = cnt / total;
+        });
+        return {
+          bucketStart,
+          label: labels[bucketStart],
+          ...proportions
+        };
+      });
   }, [data]);
 
   const agentIds = useMemo(() => {
@@ -115,7 +122,7 @@ export function AgentAnswerShareChart({ trackingNumbers }: { trackingNumbers: Tr
 
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} stackOffset="expand" margin={{ top: 10, right: 18, left: -6, bottom: 6 }}>
+          <AreaChart data={chartData} stackOffset="none" margin={{ top: 10, right: 18, left: -6, bottom: 6 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" strokeOpacity={0.7} />
             <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#94a3b8" }} />
             <YAxis tick={{ fontSize: 12, fill: "#94a3b8" }} tickFormatter={(v) => `${Math.round(v * 100)}%`} />
