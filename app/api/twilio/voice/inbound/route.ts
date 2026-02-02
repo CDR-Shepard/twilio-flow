@@ -136,7 +136,8 @@ export async function POST(request: Request) {
     .sort((a, b) => a.delay - b.delay);
 
   if (groupIndex >= groups.length) {
-    if (trackedNumber.voicemail_enabled) {
+    // For call-flow based numbers, skip voicemail to allow full ring-through logic
+    if (!trackedNumber.call_flow_id && trackedNumber.voicemail_enabled) {
       twiml.say(trackedNumber.voicemail_prompt || "Please leave a message after the tone.");
       twiml.record({
         action: `${baseUrl}/api/twilio/voice/voicemail?call_id=${callId}`,
