@@ -25,7 +25,8 @@ export function AgentAnswerShareChart({ trackingNumbers }: { trackingNumbers: Tr
   const formatTooltip: TooltipProps<number, string>["formatter"] = (value, name) => {
     const num = typeof value === "number" ? value : Number(value ?? 0);
     const key = String(name ?? "");
-    return [`${Math.round(num * 100)}%`, data?.agents?.[key]?.full_name ?? key];
+    // value arrives as normalized ratio (0–1) because stackOffset="expand"
+    return [`${Math.round(num * 1000) / 10}%`, data?.agents?.[key]?.full_name ?? key];
   };
 
   useEffect(() => {
@@ -52,10 +53,10 @@ export function AgentAnswerShareChart({ trackingNumbers }: { trackingNumbers: Tr
     const buckets: Record<string, Record<string, number>> = {};
     const labels: Record<string, string> = {};
 
-    data.data.forEach((row: { bucket_start: string; agent_id: string; pct: number }) => {
+    data.data.forEach((row: { bucket_start: string; agent_id: string; answered_count: number }) => {
       const key = row.bucket_start;
       if (!buckets[key]) buckets[key] = {};
-      buckets[key][row.agent_id] = Math.round((row.pct ?? 0) * 1000) / 10;
+      buckets[key][row.agent_id] = row.answered_count ?? 0;
       labels[key] = format(parseISO(key), data.bucket === "minute" ? "h:mm a" : data.bucket === "hour" ? "MMM d h a" : "MMM d");
     });
 

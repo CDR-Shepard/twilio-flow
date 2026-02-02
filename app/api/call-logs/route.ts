@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const q = searchParams.get("q") ?? undefined;
   const from = searchParams.get("from") ?? undefined;
   const to = searchParams.get("to") ?? undefined;
-  const limit = Number.parseInt(searchParams.get("limit") || "100", 10);
+  const limit = Math.min(Number.parseInt(searchParams.get("limit") || "500", 10), 1000);
 
   const { supabaseUrl, supabaseAnonKey } = getSupabaseEnv();
   const supabase = createRouteHandlerClient<Database>({ cookies }, { supabaseUrl, supabaseKey: supabaseAnonKey });

@@ -21,7 +21,7 @@ export default async function CallLogsPage({
       "id, from_number, to_number, status, started_at, ended_at, connected_agent_id, voicemail_url, recording_url, recording_sid, recording_duration_seconds, agents:connected_agent_id(full_name), tracked_numbers:tracked_number_id(friendly_name)"
     )
     .order("started_at", { ascending: false })
-    .limit(100);
+    .limit(1000);
 
   if (searchParams.tracked_number_id) callsQuery = callsQuery.eq("tracked_number_id", searchParams.tracked_number_id);
   if (searchParams.status) callsQuery = callsQuery.eq("status", searchParams.status);

@@ -47,7 +47,7 @@ export function CallLogsTable({
     if (searchParams.q) query.set("q", searchParams.q);
     if (searchParams.from) query.set("from", searchParams.from);
     if (searchParams.to) query.set("to", searchParams.to);
-    query.set("limit", "100");
+    query.set("limit", "500");
     return query.toString();
   }, [searchParams.tracked_number_id, searchParams.status, searchParams.agent_id, searchParams.q, searchParams.from, searchParams.to]);
 
