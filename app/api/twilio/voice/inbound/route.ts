@@ -158,7 +158,7 @@ export async function POST(request: Request) {
   }
 
   const waitSeconds =
-    groupIndex === 0 ? 0 : Math.max(0, currentGroup.delay - groups[groupIndex - 1].delay);
+    groupIndex === 0 ? Math.max(0, currentGroup.delay) : Math.max(0, currentGroup.delay - groups[groupIndex - 1].delay);
   if (waitSeconds > 0) {
     twiml.pause({ length: waitSeconds });
   }
