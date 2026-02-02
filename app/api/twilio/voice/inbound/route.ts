@@ -135,9 +135,15 @@ export async function POST(request: Request) {
   for (const agent of activeAgents) {
     const delayMs = Math.max(0, (agent.delay_seconds ?? 0) * 1000);
     // fire-and-forget with delay
-    setTimeout(() => {
-      client.calls
-        .create({
+    setTimeout(async () => {
+      try {
+        const { data } = await supabaseAdmin
+          .from("calls")
+          .select("connected_agent_id, status")
+          .eq("id", callId)
+          .single();
+        if (data?.connected_agent_id) return;
+        await client.calls.create({
           to: agent.phone_number,
           from: trackedNumber.twilio_phone_number,
           url: `${baseUrl}/api/twilio/voice/agent-bridge?conference=${encodeURIComponent(conferenceName)}&call_id=${callId}&agent_id=${agent.id}&delay_seconds=${agent.delay_seconds ?? 0}`,
@@ -145,8 +151,10 @@ export async function POST(request: Request) {
           statusCallbackEvent: ["initiated", "ringing", "answered", "completed", "busy", "failed", "no-answer"],
           statusCallbackMethod: "POST",
           timeout: 20
-        })
-        .catch(() => {});
+        });
+      } catch (e) {
+        // ignore
+      }
     }, delayMs);
   }
 
@@ -168,7 +176,7 @@ export async function POST(request: Request) {
       beep: "false",
       startConferenceOnEnter: true,
       endConferenceOnExit: true,
-      maxParticipants: 2
+      maxParticipants: 3
     },
     conferenceName
   );
