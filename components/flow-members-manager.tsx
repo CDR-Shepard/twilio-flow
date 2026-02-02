@@ -40,6 +40,7 @@ export function FlowMembersManager({
   const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
   const [saving, startTransition] = useTransition();
   const saveTimer = useRef<NodeJS.Timeout | null>(null);
+  const hasMounted = useRef(false);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -52,6 +53,10 @@ export function FlowMembersManager({
 
   // auto-save with debounce
   useEffect(() => {
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       startTransition(() => onSave(members));
