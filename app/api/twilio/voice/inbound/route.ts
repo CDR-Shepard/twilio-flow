@@ -62,6 +62,29 @@ export async function POST(request: Request) {
   // Resolve routing: prefer call flow if assigned, fallback to per-number routes
   let activeAgents: { id: string; full_name: string; phone_number: string; active: boolean; delay_seconds: number }[] =
     [];
+  const loadRoutes = async () => {
+    const { data: routesData } = await supabaseAdmin
+      .from("tracked_number_routes")
+      .select("agent_id, agents(full_name, phone_number, active)")
+      .eq("tracked_number_id", trackedNumber.id)
+      .eq("active", true)
+      .order("sort_order", { ascending: true });
+    type AgentEntry = { full_name?: string | null; phone_number?: string | null; active?: boolean | null };
+    type RouteRow = { agent_id: string; agents?: AgentEntry | AgentEntry[] | null };
+    const routesRaw: RouteRow[] = (routesData as RouteRow[] | null) ?? [];
+    return routesRaw
+      .map((r) => {
+        const agentEntry = Array.isArray(r.agents) ? r.agents[0] : r.agents;
+        return {
+          id: r.agent_id as string,
+          full_name: agentEntry?.full_name ?? "",
+          phone_number: agentEntry?.phone_number ?? "",
+          active: agentEntry?.active ?? false,
+          delay_seconds: 0
+        };
+      })
+      .filter((a) => a.active);
+  };
 
   if (trackedNumber.call_flow_id) {
     const { data: flowRows } = await supabaseAdmin
@@ -83,28 +106,12 @@ export async function POST(request: Request) {
         delay_seconds: r.delay_seconds ?? 0
       }))
       .filter((a) => a.id && a.active);
+    // Fallback to legacy per-number routes if flow has no active members
+    if (activeAgents.length === 0) {
+      activeAgents = await loadRoutes();
+    }
   } else {
-    const { data: routesData } = await supabaseAdmin
-      .from("tracked_number_routes")
-      .select("agent_id, agents(full_name, phone_number, active)")
-      .eq("tracked_number_id", trackedNumber.id)
-      .eq("active", true)
-      .order("sort_order", { ascending: true });
-    type AgentEntry = { full_name?: string | null; phone_number?: string | null; active?: boolean | null };
-    type RouteRow = { agent_id: string; agents?: AgentEntry | AgentEntry[] | null };
-    const routesRaw: RouteRow[] = (routesData as RouteRow[] | null) ?? [];
-    activeAgents = routesRaw
-      .map((r) => {
-        const agentEntry = Array.isArray(r.agents) ? r.agents[0] : r.agents;
-        return {
-          id: r.agent_id as string,
-          full_name: agentEntry?.full_name ?? "",
-          phone_number: agentEntry?.phone_number ?? "",
-          active: agentEntry?.active ?? false,
-          delay_seconds: 0
-        };
-      })
-      .filter((a) => a.active);
+    activeAgents = await loadRoutes();
   }
 
   if (activeAgents.length === 0) {
