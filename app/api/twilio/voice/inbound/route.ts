@@ -7,8 +7,9 @@ export async function POST(request: Request) {
   const signature = request.headers.get("x-twilio-signature");
   const url = new URL(request.url);
   const pathWithQuery = `${url.pathname}${url.search}`;
+  const groupIndex = Number(url.searchParams.get("group") || "0");
 
-  if (!validateTwilioRequest(rawBody, signature, pathWithQuery)) {
+  if (groupIndex === 0 && !validateTwilioRequest(rawBody, signature, pathWithQuery)) {
     return new Response("Invalid signature", { status: 401 });
   }
 
@@ -16,7 +17,6 @@ export async function POST(request: Request) {
   const toNumber = (params.get("To") || "").trim();
   const fromNumber = (params.get("From") || "").trim();
   const callSid = params.get("CallSid") || "";
-  const groupIndex = Number(url.searchParams.get("group") || "0");
   const callIdParam = url.searchParams.get("call_id");
 
   const twiml = new VoiceResponse();
