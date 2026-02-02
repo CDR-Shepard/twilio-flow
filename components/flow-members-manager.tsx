@@ -41,6 +41,7 @@ export function FlowMembersManager({
   const [saving, startTransition] = useTransition();
   const saveTimer = useRef<NodeJS.Timeout | null>(null);
   const hasMounted = useRef(false);
+  const [showSaving, setShowSaving] = useState(false);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -65,6 +66,19 @@ export function FlowMembersManager({
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
   }, [members, onSave]);
+
+  // Smooth saving indicator to avoid flicker on quick saves
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    if (saving) {
+      timer = setTimeout(() => setShowSaving(true), 300);
+    } else {
+      setShowSaving(false);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [saving]);
 
   const handleDragStart = () => {};
 
@@ -169,7 +183,7 @@ export function FlowMembersManager({
               {flowType === "simultaneous" ? "Simultaneous waves by delay" : "Order defines ring priority"}
             </p>
           </div>
-          <div className="text-xs text-slate-500">{saving ? "Saving…" : "Auto-saved"}</div>
+          <div className="text-xs text-slate-500">{showSaving ? "Saving…" : "Auto-saved"}</div>
         </div>
 
         <DndContext sensors={sensors} onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
