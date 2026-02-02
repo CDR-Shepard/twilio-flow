@@ -3,16 +3,16 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { LayoutDashboard, Users, Phone, PhoneCall, LogOut, Settings, Activity, Menu } from "lucide-react";
+import { LayoutDashboard, Users, Phone, PhoneCall, LogOut, Settings, Activity, Menu, Voicemail, BarChart3 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useState } from "react";
 
 const navItems = [
   { href: "/console", label: "Overview", icon: LayoutDashboard },
   { href: "/live", label: "Live feed", icon: Activity },
-  { href: "/call-logs", label: "Logs", icon: PhoneCall },
+  { href: "/call-logs", label: "Logs", icon: BarChart3 },
   { href: "/tracked-numbers", label: "Numbers", icon: Phone },
-  { href: "/call-flows", label: "Call flows", icon: PhoneCall },
+  { href: "/call-flows", label: "Call flows", icon: Voicemail },
   { href: "/agents", label: "Agents", icon: Users },
   { href: "/settings", label: "Settings", icon: Settings }
 ];
@@ -42,6 +42,7 @@ export function Nav() {
             variant === "mobile" && "hover:bg-slate-100",
             active ? "bg-slate-900 text-white hover:bg-slate-800" : "text-slate-700"
           )}
+          title={item.label}
           onClick={() => setMobileOpen(false)}
         >
           <Icon className="h-4 w-4" />
@@ -70,6 +71,7 @@ export function Nav() {
                   "flex h-11 w-11 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100",
                   active && "bg-slate-900 text-white hover:bg-slate-900"
                 )}
+                title={item.label}
               >
                 <Icon className="h-4 w-4" />
               </Link>

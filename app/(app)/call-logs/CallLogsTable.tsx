@@ -228,7 +228,7 @@ export function CallLogsTable({
                     {call.recording_url ? (
                       <div className="space-y-1">
                         <audio
-                          className="max-w-[220px]"
+                          className="w-full max-w-xs rounded-lg border border-slate-200 bg-slate-50 px-2 py-2"
                           controls
                           preload="none"
                           src={
@@ -249,7 +249,12 @@ export function CallLogsTable({
                   </td>
                   <td className="px-3 py-2">
                     {call.voicemail_url ? (
-                      <audio className="max-w-[220px]" controls preload="none" src={`${call.voicemail_url}.mp3`} />
+                      <audio
+                        className="w-full max-w-xs rounded-lg border border-slate-200 bg-slate-50 px-2 py-2"
+                        controls
+                        preload="none"
+                        src={`${call.voicemail_url}.mp3`}
+                      />
                     ) : (
                       <span className="text-slate-400">—</span>
                     )}
