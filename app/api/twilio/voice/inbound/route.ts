@@ -166,7 +166,7 @@ export async function POST(request: Request) {
 
   const dial = twiml.dial({
     answerOnBridge: true,
-    timeout: 18, // allow enough time before moving to next wave
+    timeout: 8, // shorter so next wave triggers quickly on no-answer/busy
     callerId: trackedNumber.twilio_phone_number, // mask caller ID to agents
     action: `${baseUrl}/api/twilio/voice/inbound/route?call_id=${callId}&group=${nextGroupIndex}`,
     method: "POST",
