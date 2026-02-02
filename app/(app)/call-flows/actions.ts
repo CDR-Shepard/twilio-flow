@@ -90,3 +90,40 @@ export async function saveFlowMembers(formData: FormData) {
   }
   revalidatePath("/call-flows");
 }
+
+export async function setFlowMembers(
+  flowId: string,
+  members: { agent_id: string; delay_seconds: number; sort_order: number; active: boolean }[]
+) {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  // Upsert members
+  if (members.length) {
+    await supabaseAdmin
+      .from("call_flow_members")
+      .upsert(
+        members.map((m) => ({
+          call_flow_id: flowId,
+          agent_id: m.agent_id,
+          delay_seconds: m.delay_seconds,
+          sort_order: m.sort_order,
+          active: m.active
+        })),
+        { onConflict: "call_flow_id,agent_id" }
+      );
+  }
+
+  // Remove any that are no longer present
+  const agentIds = members.map((m) => m.agent_id);
+  if (agentIds.length === 0) {
+    await supabaseAdmin.from("call_flow_members").delete().eq("call_flow_id", flowId);
+  } else {
+    await supabaseAdmin
+      .from("call_flow_members")
+      .delete()
+      .eq("call_flow_id", flowId)
+      .not("agent_id", "in", `(${agentIds.map((id) => `"${id}"`).join(",")})`);
+  }
+
+  revalidatePath("/call-flows");
+}
