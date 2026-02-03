@@ -1,38 +1,40 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `app/` – Next.js app routes (`(app)` for authenticated UI, `(v2)` for console/live pages, API route handlers under `api/`).
-- `components/` – shared UI and chart components.
-- `lib/` – helpers (Supabase client, auth, metrics, Twilio helpers).
-- `supabase/` – SQL migrations.
-- `tailwind.config.ts`, `globals.css` – styling configuration.
+- `app/` — Next.js routes; `(app)` holds authenticated UI, `(v2)` covers console/live views, `api/` contains route handlers (Twilio voice, analytics, auth).
+- `components/` — shared UI pieces and chart primitives used by `/console` and `/call-logs`.
+- `lib/` — Supabase helpers, auth/session utilities, Twilio client/TwiML helpers, analytics logic.
+- `supabase/` — SQL migrations; run in order (e.g., `004_call_flows.sql` enables per-agent delays).
+- Styling config in `tailwind.config.ts` and `app/globals.css`; assets under `public/`.
 
 ## Build, Test, and Development Commands
 - `npm run dev` — start the Next.js dev server.
-- `npm run build` — type-check, lint, and produce production build (used in CI).
-- `npm run start` — serve the production build locally.
-- `npm run lint` — run ESLint.
+- `npm run build` — type-check, lint, and emit the production build (CI uses this).
+- `npm run start` — serve the built app locally.
+- `npm run lint` — ESLint with project rules; run before committing UI-heavy changes.
 
 ## Coding Style & Naming Conventions
-- TypeScript throughout; prefer explicit types on exported functions.
-- Follow existing folder naming: feature pages under `app/(app)/...`, shared bits in `components/`.
-- Use Tailwind for styling; prefer semantic utility groupings and design tokens from `brand`/`accent` palette.
-- Keep imports absolute from project root (as seen) or relative within feature folders; avoid deep relative chains.
+- TypeScript-first; add explicit return types on exported functions/handlers.
+- Keep imports absolute from project root (`@/lib/...`, `@/components/...`) or short relative within a feature folder.
+- Use Tailwind utilities with semantic groupings; prefer design tokens from the `brand`/`accent` palette.
+- Components: name `PascalCase`; files co-located with route or feature when small, otherwise move to `components/`.
+- Avoid silent `any`; narrow Twilio/Supabase payload types where practical.
 
 ## Testing Guidelines
-- No formal test suite is present; run `npm run build` before pushing to catch lint/type issues.
-- When adding tests, colocate near features and name `*.test.ts` or `*.spec.ts`.
+- No formal test suite today; minimum bar is `npm run build` before pushing to catch type/lint issues.
+- If adding tests, colocate as `*.test.ts` / `*.spec.ts` near the code under test and keep fixtures small.
+- For Twilio flows, use Twilio console webhooks against `/api/twilio/voice/*` in a staging project before production flips.
 
 ## Commit & Pull Request Guidelines
-- Commit style: short, imperative, scoped (e.g., `fix: normalize agent share` / `feat: conference fan-out` / `chore: raise call log limits`).
-- Group related changes; avoid large unrelated diffs.
-- PRs should describe behavior, include steps to verify (e.g., `npm run build`), and screenshots for UI changes when possible.
+- Commit messages: short, imperative, scoped (e.g., `feat: conference fan-out delays`, `fix: agent share math`, `chore: bump twilio sdk`).
+- Group related changes; avoid drive-by refactors in the same commit.
+- PRs should include: what changed, why, how to verify (commands or call flow steps), and screenshots/recordings for UI adjustments.
 
 ## Security & Configuration Tips
-- Required env vars for voice flows: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_APP_BASE_URL`, Supabase keys (see `getSupabaseEnv`).
-- Never commit secrets; use `.env.local` (gitignored).
-- For delayed call flows to work, migration `004_call_flows.sql` must be applied and `call_flow_members.delay_seconds` set.
+- Secrets live in `.env.local` (gitignored). Required: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_APP_BASE_URL`, Supabase service/anon keys.
+- Verify migrations are applied (`supabase/`); delayed call flows rely on `call_flow_members.delay_seconds`.
+- Never log auth tokens or caller PII; prefer masked logging in API routes.
 
 ## Architecture Notes
-- Voice routing is handled under `app/api/twilio/voice/*`; inbound calls now use a conference fan-out to honor per-agent delays.
-- Analytics endpoints live in `app/api/analytics/*`; dashboards use Recharts components in `components/`.
+- Inbound voice (`app/api/twilio/voice/inbound`) fans out to agents via outbound API legs with per-agent delays, bridging everyone into a Twilio conference; `status` webhook prunes remaining legs when someone answers.
+- Analytics endpoints under `app/api/analytics/*`; charts share renderers in `components/agent-answer-share-chart.tsx` and related files.
