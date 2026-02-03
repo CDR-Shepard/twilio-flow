@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import twilio from "twilio";
 import { getSupabaseAdmin } from "../../../../../lib/supabase/admin";
 import { VoiceResponse, validateTwilioRequest } from "../../../../../lib/twilio";
 
@@ -121,65 +120,73 @@ export async function POST(request: Request) {
   }
 
   const baseUrl = process.env.TWILIO_APP_BASE_URL;
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  if (!accountSid || !authToken || !baseUrl) {
-    twiml.say("Configuration error. Please contact support.");
+
+  // wave-based dialing (no conference) to keep routing simple and reliable
+  const groups = Object.entries(
+    activeAgents.reduce<Record<number, typeof activeAgents>>((acc, agent) => {
+      const bucket = agent.delay_seconds || 0;
+      if (!acc[bucket]) acc[bucket] = [];
+      acc[bucket].push(agent);
+      return acc;
+    }, {})
+  )
+    .map(([delay, members]) => ({
+      delay: Number(delay),
+      members: members.sort((a, b) => a.full_name.localeCompare(b.full_name))
+    }))
+    .sort((a, b) => a.delay - b.delay);
+
+  if (groupIndex >= groups.length) {
+    // For call-flow based numbers, skip voicemail to allow full ring-through logic
+    if (!trackedNumber.call_flow_id && trackedNumber.voicemail_enabled) {
+      twiml.say(trackedNumber.voicemail_prompt || "Please leave a message after the tone.");
+      twiml.record({
+        action: `${baseUrl}/api/twilio/voice/voicemail?call_id=${callId}`,
+        method: "POST",
+        maxLength: 120,
+        playBeep: true
+      });
+    } else {
+      twiml.hangup();
+    }
     return twimlResponse(twiml);
   }
 
-  const client = twilio(accountSid, authToken);
-  const conferenceName = `cf-${callId}`;
-
-  // Fan out to agents using delayed outbound calls into a shared conference
-  for (const agent of activeAgents) {
-    const delayMs = Math.max(0, (agent.delay_seconds ?? 0) * 1000);
-    // fire-and-forget with delay
-    setTimeout(async () => {
-      try {
-        const { data } = await supabaseAdmin
-          .from("calls")
-          .select("connected_agent_id, status")
-          .eq("id", callId)
-          .single();
-        if (data?.connected_agent_id) return;
-        await client.calls.create({
-          to: agent.phone_number,
-          from: trackedNumber.twilio_phone_number,
-          url: `${baseUrl}/api/twilio/voice/agent-bridge?conference=${encodeURIComponent(conferenceName)}&call_id=${callId}&agent_id=${agent.id}&delay_seconds=${agent.delay_seconds ?? 0}`,
-          statusCallback: `${baseUrl}/api/twilio/voice/status?call_id=${callId}&agent_id=${agent.id}&parent_call_sid=${callSid}&delay_seconds=${agent.delay_seconds ?? 0}`,
-          statusCallbackEvent: ["initiated", "ringing", "answered", "completed", "busy", "failed", "no-answer"],
-          statusCallbackMethod: "POST",
-          timeout: 20
-        });
-      } catch (e) {
-        // ignore
-      }
-    }, delayMs);
-  }
+  const currentGroup = groups[groupIndex];
+  const nextGroupIndex = groupIndex + 1;
 
   if (groupIndex === 0 && trackedNumber.greeting_text) {
     twiml.say({ voice: "Polly.Joanna" }, trackedNumber.greeting_text);
   }
 
-  // Place caller into conference; max 2 participants (caller + first agent)
+  const waitSeconds =
+    groupIndex === 0 ? Math.max(0, currentGroup.delay) : Math.max(0, currentGroup.delay - groups[groupIndex - 1].delay);
+  if (waitSeconds > 0) {
+    twiml.pause({ length: waitSeconds });
+  }
+
   const dial = twiml.dial({
     answerOnBridge: true,
+    timeout: 12,
     callerId: trackedNumber.twilio_phone_number,
+    action: `${baseUrl}/api/twilio/voice/inbound/route?call_id=${callId}&group=${nextGroupIndex}`,
+    method: "POST",
     record: "record-from-answer-dual",
     recordingStatusCallback: `${baseUrl}/api/twilio/voice/recording`,
     recordingStatusCallbackEvent: ["completed"],
     recordingStatusCallbackMethod: "POST"
   });
-  dial.conference(
-    {
-      beep: "false",
-      startConferenceOnEnter: true,
-      endConferenceOnExit: true,
-      maxParticipants: 5
-    },
-    conferenceName
-  );
+
+  for (const agent of currentGroup.members) {
+    dial.number(
+      {
+        statusCallback: `${baseUrl}/api/twilio/voice/status?call_id=${callId}&agent_id=${agent.id}&delay_seconds=${agent.delay_seconds ?? 0}`,
+        statusCallbackEvent: ["initiated", "ringing", "answered", "completed"],
+        statusCallbackMethod: "POST"
+      },
+      agent.phone_number
+    );
+  }
 
   return twimlResponse(twiml);
 }

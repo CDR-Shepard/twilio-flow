@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import twilio from "twilio";
 import { getSupabaseAdmin } from "../../../../../lib/supabase/admin";
 import { VoiceResponse, validateTwilioRequest } from "../../../../../lib/twilio";
 
@@ -63,10 +62,7 @@ export async function POST(request: Request) {
   const agentId = url.searchParams.get("agent_id") || undefined;
   const scope = url.searchParams.get("scope") || "leg";
   const delaySeconds = Number(url.searchParams.get("delay_seconds") || "0");
-  const parentCallSid = url.searchParams.get("parent_call_sid") || undefined;
   const supabaseAdmin = getSupabaseAdmin();
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
 
   if (scope === "parent" && callId) {
     const status = mapCallStatus(callStatus);
@@ -118,30 +114,6 @@ export async function POST(request: Request) {
         .from("calls")
         .update({ status: "connected", connected_agent_id: agentId })
         .eq("id", callId);
-
-      // Kick other participants in the conference once one answers
-      if (accountSid && authToken) {
-        const client = twilio(accountSid, authToken);
-        const conferenceName = `cf-${callId}`;
-        try {
-          const conferences = await client.conferences.list({
-            friendlyName: conferenceName,
-            status: "in-progress",
-            limit: 1
-          });
-          if (conferences.length) {
-            const confSid = conferences[0].sid;
-            const participants = await client.conferences(confSid).participants.list();
-            await Promise.all(
-              participants
-                .filter((p) => p.callSid !== callSid && (!parentCallSid || p.callSid !== parentCallSid))
-                .map((p) => client.conferences(confSid).participants(p.callSid).remove())
-            );
-          }
-        } catch (e) {
-          // ignore; worst case other legs time out
-        }
-      }
     }
 
     if (attemptStatus === "completed" || attemptStatus === "failed" || attemptStatus === "canceled") {
