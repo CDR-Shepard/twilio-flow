@@ -132,23 +132,32 @@ export async function POST(request: Request) {
   // Fan-out conference model with per-agent delays
   const conferenceName = `cf-${callId}`;
 
-  for (const agent of activeAgents) {
-    const delayMs = Math.max(0, (agent.delay_seconds ?? 0) * 1000);
-    setTimeout(async () => {
-      try {
-        await client.calls.create({
-          to: agent.phone_number,
-          from: trackedNumber.twilio_phone_number,
-          url: `${baseUrl}/api/twilio/voice/agent-bridge?conference=${encodeURIComponent(conferenceName)}&call_id=${callId}&agent_id=${agent.id}&delay_seconds=${agent.delay_seconds ?? 0}`,
-          statusCallback: `${baseUrl}/api/twilio/voice/status?call_id=${callId}&agent_id=${agent.id}&parent_call_sid=${callSid}&delay_seconds=${agent.delay_seconds ?? 0}`,
-          statusCallbackEvent: ["initiated", "ringing", "answered", "completed", "busy", "failed", "no-answer"],
-          statusCallbackMethod: "POST",
-          timeout: 20
-        });
-      } catch (e) {
-        // ignore; Twilio logs will show if failures occur
-      }
-    }, delayMs);
+  // In a serverless environment timers may be trimmed after the handler returns,
+  // so we sequence delays synchronously to guarantee outbound legs are scheduled
+  // before we respond to Twilio. Keep cumulative wait under ~12s to avoid webhook
+  // timeouts; larger delays will still work but may risk Twilio retrying.
+  let elapsedMs = 0;
+  const sortedAgents = [...activeAgents].sort((a, b) => (a.delay_seconds ?? 0) - (b.delay_seconds ?? 0));
+  for (const agent of sortedAgents) {
+    const targetDelayMs = Math.max(0, (agent.delay_seconds ?? 0) * 1000);
+    const waitMs = Math.max(0, targetDelayMs - elapsedMs);
+    if (waitMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+      elapsedMs += waitMs;
+    }
+    try {
+      await client.calls.create({
+        to: agent.phone_number,
+        from: trackedNumber.twilio_phone_number,
+        url: `${baseUrl}/api/twilio/voice/agent-bridge?conference=${encodeURIComponent(conferenceName)}&call_id=${callId}&agent_id=${agent.id}&delay_seconds=${agent.delay_seconds ?? 0}`,
+        statusCallback: `${baseUrl}/api/twilio/voice/status?call_id=${callId}&agent_id=${agent.id}&parent_call_sid=${callSid}&delay_seconds=${agent.delay_seconds ?? 0}`,
+        statusCallbackEvent: ["initiated", "ringing", "answered", "completed", "busy", "failed", "no-answer"],
+        statusCallbackMethod: "POST",
+        timeout: 20
+      });
+    } catch (e) {
+      // ignore; Twilio logs will show if failures occur
+    }
   }
 
   if (groupIndex === 0 && trackedNumber.greeting_text) {
