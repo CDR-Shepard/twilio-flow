@@ -63,6 +63,7 @@ export async function POST(request: Request) {
   const agentId = url.searchParams.get("agent_id") || undefined;
   const scope = url.searchParams.get("scope") || "leg";
   const delaySeconds = Number(url.searchParams.get("delay_seconds") || "0");
+  const parentCallSid = url.searchParams.get("parent_call_sid") || undefined;
   const supabaseAdmin = getSupabaseAdmin();
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -133,7 +134,7 @@ export async function POST(request: Request) {
             const participants = await client.conferences(confSid).participants.list();
             await Promise.all(
               participants
-                .filter((p) => p.callSid !== callSid)
+                .filter((p) => p.callSid !== callSid && (!parentCallSid || p.callSid !== parentCallSid))
                 .map((p) => client.conferences(confSid).participants(p.callSid).remove())
             );
           }

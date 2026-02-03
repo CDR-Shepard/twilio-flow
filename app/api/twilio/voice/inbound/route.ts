@@ -147,7 +147,7 @@ export async function POST(request: Request) {
           to: agent.phone_number,
           from: trackedNumber.twilio_phone_number,
           url: `${baseUrl}/api/twilio/voice/agent-bridge?conference=${encodeURIComponent(conferenceName)}&call_id=${callId}&agent_id=${agent.id}&delay_seconds=${agent.delay_seconds ?? 0}`,
-          statusCallback: `${baseUrl}/api/twilio/voice/status?call_id=${callId}&agent_id=${agent.id}&delay_seconds=${agent.delay_seconds ?? 0}`,
+          statusCallback: `${baseUrl}/api/twilio/voice/status?call_id=${callId}&agent_id=${agent.id}&parent_call_sid=${callSid}&delay_seconds=${agent.delay_seconds ?? 0}`,
           statusCallbackEvent: ["initiated", "ringing", "answered", "completed", "busy", "failed", "no-answer"],
           statusCallbackMethod: "POST",
           timeout: 20
@@ -176,7 +176,7 @@ export async function POST(request: Request) {
       beep: "false",
       startConferenceOnEnter: true,
       endConferenceOnExit: true,
-      maxParticipants: 3
+      maxParticipants: 5
     },
     conferenceName
   );
