@@ -112,6 +112,8 @@ export async function POST(request: Request) {
       });
     }
 
+    const { data: callRow } = await supabaseAdmin.from("calls").select("connected_agent_id").eq("id", callId).maybeSingle();
+
     // Ensure we capture the answering agent even if Twilio skips explicit "answered"
     if (attemptStatus === "answered" || attemptStatus === "completed") {
       await supabaseAdmin
@@ -144,10 +146,15 @@ export async function POST(request: Request) {
       }
     }
 
-    if (attemptStatus === "completed" || attemptStatus === "failed" || attemptStatus === "canceled") {
+    // Only mark the call complete when the connected agent's leg ends
+    if (
+      attemptStatus === "completed" &&
+      callRow?.connected_agent_id &&
+      callRow.connected_agent_id === agentId
+    ) {
       await supabaseAdmin
         .from("calls")
-        .update({ ended_at: new Date().toISOString(), status: mapCallStatus(callStatus) })
+        .update({ ended_at: new Date().toISOString(), status: "completed" })
         .eq("id", callId);
     }
   }
