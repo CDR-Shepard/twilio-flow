@@ -132,27 +132,29 @@ export async function POST(request: Request) {
   // Fan-out conference model with per-agent delays
   const conferenceName = `cf-${callId}`;
 
-  // Schedule outbound legs; respond to Twilio immediately so the caller isn't dropped.
-  for (const agent of [...activeAgents].sort((a, b) => (a.delay_seconds ?? 0) - (b.delay_seconds ?? 0))) {
-    const delayMs = Math.max(0, (agent.delay_seconds ?? 0) * 1000);
-    const timer = setTimeout(async () => {
-      try {
-        await client.calls.create({
-          to: agent.phone_number,
-          from: trackedNumber.twilio_phone_number,
-          url: `${baseUrl}/api/twilio/voice/agent-bridge?conference=${encodeURIComponent(conferenceName)}&call_id=${callId}&agent_id=${agent.id}&delay_seconds=${agent.delay_seconds ?? 0}`,
-          statusCallback: `${baseUrl}/api/twilio/voice/status?call_id=${callId}&agent_id=${agent.id}&parent_call_sid=${callSid}&delay_seconds=${agent.delay_seconds ?? 0}`,
+  // Schedule outbound legs synchronously to ensure they are created before returning.
+  // Twilio gives ~15s for webhook response; we keep total wait well below that.
+  let elapsedMs = 0;
+  const sortedAgents = [...activeAgents].sort((a, b) => (a.delay_seconds ?? 0) - (b.delay_seconds ?? 0));
+  for (const agent of sortedAgents) {
+    const targetDelayMs = Math.max(0, (agent.delay_seconds ?? 0) * 1000);
+    const waitMs = Math.max(0, targetDelayMs - elapsedMs);
+    if (waitMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+      elapsedMs += waitMs;
+    }
+    try {
+      await client.calls.create({
+        to: agent.phone_number,
+        from: trackedNumber.twilio_phone_number,
+        url: `${baseUrl}/api/twilio/voice/agent-bridge?conference=${encodeURIComponent(conferenceName)}&call_id=${callId}&agent_id=${agent.id}&delay_seconds=${agent.delay_seconds ?? 0}`,
+        statusCallback: `${baseUrl}/api/twilio/voice/status?call_id=${callId}&agent_id=${agent.id}&parent_call_sid=${callSid}&delay_seconds=${agent.delay_seconds ?? 0}`,
         statusCallbackEvent: ["initiated", "ringing", "answered", "completed"],
-          statusCallbackMethod: "POST",
-          timeout: 20
-        });
-      } catch (e) {
-        // ignore; Twilio logs will show if failures occur
-      }
-    }, delayMs);
-    // Allow process to exit while timer is pending (serverless-friendly)
-    if (typeof timer.unref === "function") {
-      timer.unref();
+        statusCallbackMethod: "POST",
+        timeout: 20
+      });
+    } catch (e) {
+      // ignore; Twilio logs will show if failures occur
     }
   }
 
@@ -172,7 +174,7 @@ export async function POST(request: Request) {
     {
       beep: "false",
       startConferenceOnEnter: true,
-      endConferenceOnExit: true,
+      endConferenceOnExit: false,
       maxParticipants: 10,
       waitUrl: "http://twimlets.com/holdmusic?Bucket=com.twilio.music.ambient"
     },

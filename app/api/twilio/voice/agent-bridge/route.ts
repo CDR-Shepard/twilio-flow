@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     {
       beep: "false",
       startConferenceOnEnter: true,
-      endConferenceOnExit: true,
+      endConferenceOnExit: false,
       maxParticipants: 10,
       waitUrl: "http://twimlets.com/holdmusic?Bucket=com.twilio.music.ambient"
     },
