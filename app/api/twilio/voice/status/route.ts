@@ -81,8 +81,11 @@ export async function POST(request: Request) {
     return twimlEmpty();
   }
 
+  console.log(`[status] Received: callSid=${callSid}, callStatus=${callStatus}, scope=${scope}, agentId=${agentId}, callId=${callId}`);
+
   if (agentId && callId) {
     const attemptStatus = mapAttemptStatus(callStatus);
+    console.log(`[status] Leg callback: agent=${agentId}, rawStatus=${callStatus}, mappedStatus=${attemptStatus}`);
 
     const { data: existing } = await supabaseAdmin
       .from("call_attempts")
@@ -116,6 +119,7 @@ export async function POST(request: Request) {
 
     // Ensure we capture the answering agent even if Twilio skips explicit "answered"
     if (attemptStatus === "answered" || attemptStatus === "completed") {
+      console.log(`[status] Setting call ${callId} to CONNECTED because attemptStatus=${attemptStatus} (raw: ${callStatus})`);
       await supabaseAdmin
         .from("calls")
         .update({ status: "connected", connected_agent_id: agentId })
