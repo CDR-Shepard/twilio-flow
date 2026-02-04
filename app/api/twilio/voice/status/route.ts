@@ -8,6 +8,9 @@ function mapAttemptStatus(status: string) {
     case "ringing":
       return "ringing";
     case "in-progress":
+      // in-progress means agent answered phone, but NOT that they accepted the call
+      // (they still need to press 1). Mark as "in-progress" not "answered".
+      return "in-progress";
     case "answered":
       return "answered";
     case "no-answer":
@@ -118,8 +121,9 @@ export async function POST(request: Request) {
 
     const { data: callRow } = await supabaseAdmin.from("calls").select("connected_agent_id").eq("id", callId).maybeSingle();
 
-    // Ensure we capture the answering agent even if Twilio skips explicit "answered"
-    if (attemptStatus === "answered" || attemptStatus === "completed") {
+    // Only set connected when agent explicitly answers (not in-progress, which fires before press-1)
+    // The agent-bridge handler sets connected when agent presses 1 to accept
+    if (attemptStatus === "answered") {
       console.log(`[status] Setting call ${callId} to CONNECTED because attemptStatus=${attemptStatus} (raw: ${callStatus})`);
       await supabaseAdmin
         .from("calls")
