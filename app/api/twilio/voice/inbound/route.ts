@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { waitUntil } from "@vercel/functions";
 import twilio from "twilio";
 import { getSupabaseAdmin } from "../../../../../lib/supabase/admin";
 import { VoiceResponse, validateTwilioRequest } from "../../../../../lib/twilio";
@@ -132,82 +131,55 @@ export async function POST(request: Request) {
   // Fan-out conference model with per-agent delays
   const conferenceName = `cf-${callId}`;
 
-  // Schedule outbound legs: immediate legs are created synchronously,
-  // delayed legs are scheduled via fire-and-forget to a separate endpoint.
-  for (const agent of activeAgents) {
-    const delaySeconds = agent.delay_seconds ?? 0;
+  // Sort agents by delay and create legs synchronously with waits
+  // Twilio gives ~15s for webhook response; keep total under that
+  const sortedAgents = [...activeAgents].sort((a, b) => (a.delay_seconds ?? 0) - (b.delay_seconds ?? 0));
+  let elapsedMs = 0;
 
-    if (delaySeconds === 0) {
-      // Create immediate legs synchronously before returning TwiML
-      try {
-        await client.calls.create({
-          to: agent.phone_number,
-          from: trackedNumber.twilio_phone_number,
-          url: `${baseUrl}/api/twilio/voice/agent-bridge?conference=${encodeURIComponent(conferenceName)}&call_id=${callId}&agent_id=${agent.id}&delay_seconds=0`,
-          statusCallback: `${baseUrl}/api/twilio/voice/status?call_id=${callId}&agent_id=${agent.id}&parent_call_sid=${callSid}&delay_seconds=0`,
-          statusCallbackEvent: ["initiated", "ringing", "answered", "completed"],
-          statusCallbackMethod: "POST",
-          timeout: 20
-        });
-      } catch (e) {
-        // ignore; Twilio logs will show if failures occur
-      }
-    } else {
-      // Schedule delayed legs using waitUntil to run after response is sent
-      // Capture all needed values as primitives to avoid closure issues
-      const legParams = {
-        callId: callId as string,
-        agentId: agent.id,
-        agentPhone: agent.phone_number,
-        trackedPhone: trackedNumber.twilio_phone_number,
-        conferenceName,
-        delaySeconds,
-        callSid,
-        baseUrl: baseUrl!,
-        accountSid: accountSid!,
-        authToken: authToken!
-      };
+  console.log(`[inbound] Starting fan-out for call ${callId} with ${sortedAgents.length} agents`);
 
-      waitUntil(
-        (async () => {
-          // Wait for the delay
-          await new Promise((resolve) => setTimeout(resolve, legParams.delaySeconds * 1000));
+  for (const agent of sortedAgents) {
+    const targetDelayMs = Math.max(0, (agent.delay_seconds ?? 0) * 1000);
+    const waitMs = Math.max(0, targetDelayMs - elapsedMs);
 
-          // Create fresh clients inside the closure
-          const supabase = getSupabaseAdmin();
-          const twilioClient = twilio(legParams.accountSid, legParams.authToken);
+    console.log(`[inbound] Agent ${agent.id}: delay=${agent.delay_seconds}s, waitMs=${waitMs}, elapsed=${elapsedMs}`);
 
-          // Check if call is already connected/completed/failed
-          const { data: callState } = await supabase
-            .from("calls")
-            .select("status, connected_agent_id")
-            .eq("id", legParams.callId)
-            .maybeSingle();
+    if (waitMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+      elapsedMs += waitMs;
+    }
 
-          if (
-            callState?.status === "connected" ||
-            callState?.status === "completed" ||
-            callState?.status === "failed"
-          ) {
-            return; // Call already handled, skip this leg
-          }
+    // Check if call is already connected before creating leg
+    const { data: callState } = await supabaseAdmin
+      .from("calls")
+      .select("status, connected_agent_id")
+      .eq("id", callId as string)
+      .maybeSingle();
 
-          // Create the delayed leg
-          await twilioClient.calls.create({
-            to: legParams.agentPhone,
-            from: legParams.trackedPhone,
-            url: `${legParams.baseUrl}/api/twilio/voice/agent-bridge?conference=${encodeURIComponent(legParams.conferenceName)}&call_id=${legParams.callId}&agent_id=${legParams.agentId}&delay_seconds=${legParams.delaySeconds}`,
-            statusCallback: `${legParams.baseUrl}/api/twilio/voice/status?call_id=${legParams.callId}&agent_id=${legParams.agentId}&parent_call_sid=${legParams.callSid}&delay_seconds=${legParams.delaySeconds}`,
-            statusCallbackEvent: ["initiated", "ringing", "answered", "completed"],
-            statusCallbackMethod: "POST",
-            timeout: 20
-          });
-        })().catch((e) => {
-          console.error("Failed to create delayed leg:", e);
-        })
-      );
+    console.log(`[inbound] Call state check: status=${callState?.status}`);
+
+    if (callState?.status === "connected" || callState?.status === "completed" || callState?.status === "failed") {
+      console.log(`[inbound] Breaking loop - call already ${callState?.status}`);
+      break;
+    }
+
+    try {
+      const result = await client.calls.create({
+        to: agent.phone_number,
+        from: trackedNumber.twilio_phone_number,
+        url: `${baseUrl}/api/twilio/voice/agent-bridge?conference=${encodeURIComponent(conferenceName)}&call_id=${callId}&agent_id=${agent.id}&delay_seconds=${agent.delay_seconds ?? 0}`,
+        statusCallback: `${baseUrl}/api/twilio/voice/status?call_id=${callId}&agent_id=${agent.id}&parent_call_sid=${callSid}&delay_seconds=${agent.delay_seconds ?? 0}`,
+        statusCallbackEvent: ["initiated", "ringing", "answered", "completed"],
+        statusCallbackMethod: "POST",
+        timeout: 20
+      });
+      console.log(`[inbound] Created leg for agent ${agent.id}: ${result.sid}`);
+    } catch (e) {
+      console.error(`[inbound] Failed to create leg for agent ${agent.id}:`, e);
     }
   }
+
+  console.log(`[inbound] Fan-out complete, returning TwiML`);
 
   if (groupIndex === 0 && trackedNumber.greeting_text) {
     twiml.say({ voice: "Polly.Joanna" }, trackedNumber.greeting_text);
