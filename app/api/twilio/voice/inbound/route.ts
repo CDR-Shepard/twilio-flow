@@ -132,7 +132,7 @@ export async function POST(request: Request) {
   // Fan-out conference model with per-agent delays
   const conferenceName = `cf-${callId}`;
 
-  // Schedule outbound legs synchronously to ensure they are created before returning.
+  // Schedule outbound legs synchronously, but skip further dials once the call is already connected.
   // Twilio gives ~15s for webhook response; we keep total wait well below that.
   let elapsedMs = 0;
   const sortedAgents = [...activeAgents].sort((a, b) => (a.delay_seconds ?? 0) - (b.delay_seconds ?? 0));
@@ -143,6 +143,17 @@ export async function POST(request: Request) {
       await new Promise((resolve) => setTimeout(resolve, waitMs));
       elapsedMs += waitMs;
     }
+
+    // If someone already answered, stop launching more legs
+    const { data: callState } = await supabaseAdmin
+      .from("calls")
+      .select("status, connected_agent_id")
+      .eq("id", callId as string)
+      .maybeSingle();
+    if (callState?.status === "connected" || callState?.status === "completed" || callState?.status === "failed") {
+      break;
+    }
+
     try {
       await client.calls.create({
         to: agent.phone_number,
