@@ -131,7 +131,6 @@ export async function POST(request: Request) {
 
   // Fan-out conference model with per-agent delays
   const conferenceName = `cf-${callId}`;
-  const internalSecret = process.env.INTERNAL_API_SECRET;
 
   // Schedule outbound legs: immediate legs are created synchronously,
   // delayed legs are scheduled via fire-and-forget to a separate endpoint.
@@ -154,26 +153,40 @@ export async function POST(request: Request) {
         // ignore; Twilio logs will show if failures occur
       }
     } else {
-      // Schedule delayed legs via separate endpoint
-      // Use waitUntil to ensure fetch completes after response is sent
+      // Schedule delayed legs using waitUntil to run after response is sent
+      const agentCopy = { ...agent };
       waitUntil(
-        fetch(`${baseUrl}/api/twilio/voice/schedule-leg`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(internalSecret ? { "x-internal-secret": internalSecret } : {})
-          },
-          body: JSON.stringify({
-            call_id: callId,
-            agent_id: agent.id,
-            agent_phone: agent.phone_number,
-            tracked_number: trackedNumber.twilio_phone_number,
-            conference: conferenceName,
-            delay_seconds: delaySeconds,
-            parent_call_sid: callSid
-          })
-        }).catch(() => {
-          // Log errors if needed
+        (async () => {
+          // Wait for the delay
+          await new Promise((resolve) => setTimeout(resolve, delaySeconds * 1000));
+
+          // Check if call is already connected/completed/failed
+          const { data: callState } = await supabaseAdmin
+            .from("calls")
+            .select("status, connected_agent_id")
+            .eq("id", callId as string)
+            .maybeSingle();
+
+          if (
+            callState?.status === "connected" ||
+            callState?.status === "completed" ||
+            callState?.status === "failed"
+          ) {
+            return; // Call already handled, skip this leg
+          }
+
+          // Create the delayed leg
+          await client.calls.create({
+            to: agentCopy.phone_number,
+            from: trackedNumber.twilio_phone_number,
+            url: `${baseUrl}/api/twilio/voice/agent-bridge?conference=${encodeURIComponent(conferenceName)}&call_id=${callId}&agent_id=${agentCopy.id}&delay_seconds=${delaySeconds}`,
+            statusCallback: `${baseUrl}/api/twilio/voice/status?call_id=${callId}&agent_id=${agentCopy.id}&parent_call_sid=${callSid}&delay_seconds=${delaySeconds}`,
+            statusCallbackEvent: ["initiated", "ringing", "answered", "completed"],
+            statusCallbackMethod: "POST",
+            timeout: 20
+          });
+        })().catch((e) => {
+          console.error("Failed to create delayed leg:", e);
         })
       );
     }
