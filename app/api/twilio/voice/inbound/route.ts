@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { waitUntil } from "@vercel/functions";
 import twilio from "twilio";
 import { getSupabaseAdmin } from "../../../../../lib/supabase/admin";
 import { VoiceResponse, validateTwilioRequest } from "../../../../../lib/twilio";
@@ -153,26 +154,28 @@ export async function POST(request: Request) {
         // ignore; Twilio logs will show if failures occur
       }
     } else {
-      // Fire-and-forget to scheduler endpoint for delayed legs
-      // Each delayed leg runs in its own serverless execution context
-      fetch(`${baseUrl}/api/twilio/voice/schedule-leg`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(internalSecret ? { "x-internal-secret": internalSecret } : {})
-        },
-        body: JSON.stringify({
-          call_id: callId,
-          agent_id: agent.id,
-          agent_phone: agent.phone_number,
-          tracked_number: trackedNumber.twilio_phone_number,
-          conference: conferenceName,
-          delay_seconds: delaySeconds,
-          parent_call_sid: callSid
+      // Schedule delayed legs via separate endpoint
+      // Use waitUntil to ensure fetch completes after response is sent
+      waitUntil(
+        fetch(`${baseUrl}/api/twilio/voice/schedule-leg`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(internalSecret ? { "x-internal-secret": internalSecret } : {})
+          },
+          body: JSON.stringify({
+            call_id: callId,
+            agent_id: agent.id,
+            agent_phone: agent.phone_number,
+            tracked_number: trackedNumber.twilio_phone_number,
+            conference: conferenceName,
+            delay_seconds: delaySeconds,
+            parent_call_sid: callSid
+          })
+        }).catch(() => {
+          // Log errors if needed
         })
-      }).catch(() => {
-        // Intentionally fire-and-forget; log errors if needed
-      });
+      );
     }
   }
 
