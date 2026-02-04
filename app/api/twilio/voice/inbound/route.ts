@@ -136,7 +136,9 @@ export async function POST(request: Request) {
   const sortedAgents = [...activeAgents].sort((a, b) => (a.delay_seconds ?? 0) - (b.delay_seconds ?? 0));
   let elapsedMs = 0;
 
-  console.log(`[inbound] Starting fan-out for call ${callId} with ${sortedAgents.length} agents`);
+  console.log(`[inbound] Starting fan-out for call ${callId}`);
+  console.log(`[inbound] activeAgents count: ${activeAgents.length}`);
+  console.log(`[inbound] activeAgents: ${JSON.stringify(activeAgents.map(a => ({ id: a.id, delay: a.delay_seconds, active: a.active })))}`);
 
   for (const agent of sortedAgents) {
     const targetDelayMs = Math.max(0, (agent.delay_seconds ?? 0) * 1000);
@@ -156,7 +158,7 @@ export async function POST(request: Request) {
       .eq("id", callId as string)
       .maybeSingle();
 
-    console.log(`[inbound] Call state check: status=${callState?.status}`);
+    console.log(`[inbound] Call state check for agent ${agent.id} (delay=${agent.delay_seconds}s): status=${callState?.status}, connected_agent_id=${callState?.connected_agent_id}`);
 
     if (callState?.status === "connected" || callState?.status === "completed" || callState?.status === "failed") {
       console.log(`[inbound] Breaking loop - call already ${callState?.status}`);
