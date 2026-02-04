@@ -154,17 +154,34 @@ export async function POST(request: Request) {
       }
     } else {
       // Schedule delayed legs using waitUntil to run after response is sent
-      const agentCopy = { ...agent };
+      // Capture all needed values as primitives to avoid closure issues
+      const legParams = {
+        callId: callId as string,
+        agentId: agent.id,
+        agentPhone: agent.phone_number,
+        trackedPhone: trackedNumber.twilio_phone_number,
+        conferenceName,
+        delaySeconds,
+        callSid,
+        baseUrl: baseUrl!,
+        accountSid: accountSid!,
+        authToken: authToken!
+      };
+
       waitUntil(
         (async () => {
           // Wait for the delay
-          await new Promise((resolve) => setTimeout(resolve, delaySeconds * 1000));
+          await new Promise((resolve) => setTimeout(resolve, legParams.delaySeconds * 1000));
+
+          // Create fresh clients inside the closure
+          const supabase = getSupabaseAdmin();
+          const twilioClient = twilio(legParams.accountSid, legParams.authToken);
 
           // Check if call is already connected/completed/failed
-          const { data: callState } = await supabaseAdmin
+          const { data: callState } = await supabase
             .from("calls")
             .select("status, connected_agent_id")
-            .eq("id", callId as string)
+            .eq("id", legParams.callId)
             .maybeSingle();
 
           if (
@@ -176,11 +193,11 @@ export async function POST(request: Request) {
           }
 
           // Create the delayed leg
-          await client.calls.create({
-            to: agentCopy.phone_number,
-            from: trackedNumber.twilio_phone_number,
-            url: `${baseUrl}/api/twilio/voice/agent-bridge?conference=${encodeURIComponent(conferenceName)}&call_id=${callId}&agent_id=${agentCopy.id}&delay_seconds=${delaySeconds}`,
-            statusCallback: `${baseUrl}/api/twilio/voice/status?call_id=${callId}&agent_id=${agentCopy.id}&parent_call_sid=${callSid}&delay_seconds=${delaySeconds}`,
+          await twilioClient.calls.create({
+            to: legParams.agentPhone,
+            from: legParams.trackedPhone,
+            url: `${legParams.baseUrl}/api/twilio/voice/agent-bridge?conference=${encodeURIComponent(legParams.conferenceName)}&call_id=${legParams.callId}&agent_id=${legParams.agentId}&delay_seconds=${legParams.delaySeconds}`,
+            statusCallback: `${legParams.baseUrl}/api/twilio/voice/status?call_id=${legParams.callId}&agent_id=${legParams.agentId}&parent_call_sid=${legParams.callSid}&delay_seconds=${legParams.delaySeconds}`,
             statusCallbackEvent: ["initiated", "ringing", "answered", "completed"],
             statusCallbackMethod: "POST",
             timeout: 20
