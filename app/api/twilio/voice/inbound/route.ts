@@ -201,7 +201,7 @@ export async function POST(request: Request) {
       startConferenceOnEnter: true,
       endConferenceOnExit: false,
       maxParticipants: 10,
-      waitUrl: "http://twimlets.com/holdmusic?Bucket=com.twilio.music.ambient"
+      waitUrl: `${baseUrl}/api/twilio/voice/ringback`
     },
     conferenceName
   );
