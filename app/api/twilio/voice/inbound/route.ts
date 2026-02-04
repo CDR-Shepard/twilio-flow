@@ -90,20 +90,19 @@ export async function POST(request: Request) {
   if (trackedNumber.call_flow_id) {
     const { data: flowRows } = await supabaseAdmin
       .from("call_flow_members")
-      .select("delay_seconds, sort_order, agents(id, full_name, phone_number, active)")
+      .select("delay_seconds, sort_order, active, agents(id, full_name, phone_number, active)")
       .eq("call_flow_id", trackedNumber.call_flow_id)
-      .eq("active", true)
       .order("delay_seconds", { ascending: true })
       .order("sort_order", { ascending: true });
     const rows =
-      (flowRows as { delay_seconds: number; sort_order: number; agents: { id: string; full_name: string; phone_number: string; active: boolean } | null }[] | null) ??
+      (flowRows as { delay_seconds: number; sort_order: number; active?: boolean | null; agents: { id: string; full_name: string; phone_number: string; active: boolean } | null }[] | null) ??
       [];
     activeAgents = rows
       .map((r) => ({
         id: r.agents?.id ?? "",
         full_name: r.agents?.full_name ?? "",
         phone_number: r.agents?.phone_number ?? "",
-        active: r.agents?.active ?? false,
+        active: (r.active ?? true) && (r.agents?.active ?? false),
         delay_seconds: r.delay_seconds ?? 0
       }))
       .filter((a) => a.id && a.active);
