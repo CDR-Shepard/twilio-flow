@@ -130,41 +130,49 @@ export async function POST(request: Request) {
 
   // Fan-out conference model with per-agent delays
   const conferenceName = `cf-${callId}`;
+  const internalSecret = process.env.INTERNAL_API_SECRET;
 
-  // Schedule outbound legs synchronously, but skip further dials once the call is already connected.
-  // Twilio gives ~15s for webhook response; we keep total wait well below that.
-  let elapsedMs = 0;
-  const sortedAgents = [...activeAgents].sort((a, b) => (a.delay_seconds ?? 0) - (b.delay_seconds ?? 0));
-  for (const agent of sortedAgents) {
-    const targetDelayMs = Math.max(0, (agent.delay_seconds ?? 0) * 1000);
-    const waitMs = Math.max(0, targetDelayMs - elapsedMs);
-    if (waitMs > 0) {
-      await new Promise((resolve) => setTimeout(resolve, waitMs));
-      elapsedMs += waitMs;
-    }
+  // Schedule outbound legs: immediate legs are created synchronously,
+  // delayed legs are scheduled via fire-and-forget to a separate endpoint.
+  for (const agent of activeAgents) {
+    const delaySeconds = agent.delay_seconds ?? 0;
 
-    // If someone already answered, stop launching more legs
-    const { data: callState } = await supabaseAdmin
-      .from("calls")
-      .select("status, connected_agent_id")
-      .eq("id", callId as string)
-      .maybeSingle();
-    if (callState?.status === "connected" || callState?.status === "completed" || callState?.status === "failed") {
-      break;
-    }
-
-    try {
-      await client.calls.create({
-        to: agent.phone_number,
-        from: trackedNumber.twilio_phone_number,
-        url: `${baseUrl}/api/twilio/voice/agent-bridge?conference=${encodeURIComponent(conferenceName)}&call_id=${callId}&agent_id=${agent.id}&delay_seconds=${agent.delay_seconds ?? 0}`,
-        statusCallback: `${baseUrl}/api/twilio/voice/status?call_id=${callId}&agent_id=${agent.id}&parent_call_sid=${callSid}&delay_seconds=${agent.delay_seconds ?? 0}`,
-        statusCallbackEvent: ["initiated", "ringing", "answered", "completed"],
-        statusCallbackMethod: "POST",
-        timeout: 20
+    if (delaySeconds === 0) {
+      // Create immediate legs synchronously before returning TwiML
+      try {
+        await client.calls.create({
+          to: agent.phone_number,
+          from: trackedNumber.twilio_phone_number,
+          url: `${baseUrl}/api/twilio/voice/agent-bridge?conference=${encodeURIComponent(conferenceName)}&call_id=${callId}&agent_id=${agent.id}&delay_seconds=0`,
+          statusCallback: `${baseUrl}/api/twilio/voice/status?call_id=${callId}&agent_id=${agent.id}&parent_call_sid=${callSid}&delay_seconds=0`,
+          statusCallbackEvent: ["initiated", "ringing", "answered", "completed"],
+          statusCallbackMethod: "POST",
+          timeout: 20
+        });
+      } catch (e) {
+        // ignore; Twilio logs will show if failures occur
+      }
+    } else {
+      // Fire-and-forget to scheduler endpoint for delayed legs
+      // Each delayed leg runs in its own serverless execution context
+      fetch(`${baseUrl}/api/twilio/voice/schedule-leg`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(internalSecret ? { "x-internal-secret": internalSecret } : {})
+        },
+        body: JSON.stringify({
+          call_id: callId,
+          agent_id: agent.id,
+          agent_phone: agent.phone_number,
+          tracked_number: trackedNumber.twilio_phone_number,
+          conference: conferenceName,
+          delay_seconds: delaySeconds,
+          parent_call_sid: callSid
+        })
+      }).catch(() => {
+        // Intentionally fire-and-forget; log errors if needed
       });
-    } catch (e) {
-      // ignore; Twilio logs will show if failures occur
     }
   }
 
