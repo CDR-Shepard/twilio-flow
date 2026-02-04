@@ -46,6 +46,8 @@ export function FlowMembersManager({
   const saveTimer = useRef<NodeJS.Timeout | null>(null);
   const hasMounted = useRef(false);
   const savedTimer = useRef<NodeJS.Timeout | null>(null);
+  const onSaveRef = useRef(onSave);
+  onSaveRef.current = onSave; // Keep ref updated without triggering effect
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 2 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -66,7 +68,7 @@ export function FlowMembersManager({
     saveTimer.current = setTimeout(() => {
       setStatus("saving");
       startTransition(async () => {
-        await onSave(members);
+        await onSaveRef.current(members);
         setStatus("saved");
         if (savedTimer.current) clearTimeout(savedTimer.current);
         savedTimer.current = setTimeout(() => setStatus("idle"), 1200);
@@ -76,7 +78,7 @@ export function FlowMembersManager({
       if (saveTimer.current) clearTimeout(saveTimer.current);
       if (savedTimer.current) clearTimeout(savedTimer.current);
     };
-  }, [members, onSave]);
+  }, [members]);
 
   const handleDragStart = (event: { active: { id: string | number } }) => {
     setActiveId(String(event.active.id));
