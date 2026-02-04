@@ -68,8 +68,11 @@ export async function POST(request: Request) {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
 
+  console.log(`[status] Received: callSid=${callSid}, callStatus=${callStatus}, scope=${scope}, agentId=${agentId}, callId=${callId}`);
+
   if (scope === "parent" && callId) {
     const status = mapCallStatus(callStatus);
+    console.log(`[status] Parent scope: updating call ${callId} to status=${status}`);
     const update: { status: ReturnType<typeof mapCallStatus>; ended_at?: string } = { status };
     if (status === "completed" || status === "failed") {
       update.ended_at = new Date().toISOString();
@@ -80,8 +83,6 @@ export async function POST(request: Request) {
 
     return twimlEmpty();
   }
-
-  console.log(`[status] Received: callSid=${callSid}, callStatus=${callStatus}, scope=${scope}, agentId=${agentId}, callId=${callId}`);
 
   if (agentId && callId) {
     const attemptStatus = mapAttemptStatus(callStatus);
